@@ -1,16 +1,48 @@
-# React + Vite
+# GenMed
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Patient-facing medicine comparison prototype built with React, Vite, React Router, and plain CSS.
 
-Currently, two official plugins are available:
+## Project structure
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+```text
+genmed/
+├── frontend/
+│   ├── src/
+│   ├── public/
+│   ├── package.json
+│   ├── package-lock.json
+│   ├── index.html
+│   ├── vite.config.js
+│   ├── eslint.config.js
+│   ├── vercel.json
+│   ├── node_modules/  (ignored by Git)
+│   └── dist/          (ignored by Git)
+├── DEVELOPMENT_ACTIVITY_1_GUIDE.md
+└── SECURITY_NOTES.md
+```
 
-## React Compiler
+## Run locally
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+```powershell
+Set-Location D:\genmed\frontend
+npm run dev
+```
 
-## Expanding the ESLint configuration
+For a fresh clone, run `npm ci` in `frontend` first. Existing dependencies have already been moved there.
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## Check and build
+
+```powershell
+Set-Location D:\genmed\frontend
+npm run lint
+npm run build
+npm run preview
+```
+
+## Deployment
+
+- Vercel: set Root Directory to `frontend`, build command to `npm run build`, and output directory to `dist`.
+- Netlify: set Base directory to `frontend`, build command to `npm run build`, and publish directory to `dist` relative to that base.
+- SPA routing files are `frontend/vercel.json` and `frontend/public/_redirects`.
+
+See DEVELOPMENT_ACTIVITY_1_GUIDE.md for complete source and the manual checklist. Authentication and medicine data are demonstrations; see SECURITY_NOTES.md for backend requirements.

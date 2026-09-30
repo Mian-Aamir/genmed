@@ -1,15 +1,15 @@
 # GenMed Development Activity 1 — Complete code and setup
 
 ```text
-D:\genmed\
+D:\genmed\frontend\
 ├── index.html
 ├── package.json                    (existing, unchanged)
 ├── package-lock.json               (existing, unchanged)
 ├── vite.config.js                  (existing, unchanged)
 ├── eslint.config.js                (existing, unchanged)
 ├── vercel.json
-├── SECURITY_NOTES.md
-├── DEVELOPMENT_ACTIVITY_1_GUIDE.md
+├── ../SECURITY_NOTES.md             (project root)
+├── ../DEVELOPMENT_ACTIVITY_1_GUIDE.md (project root)
 ├── public/
 │   ├── _redirects
 │   └── genmed.svg
@@ -42,11 +42,11 @@ Existing unused starter assets may still be present; the app does not import the
 
 Assumption: use the GenMed proposal found in Downloads, rather than the differently named AI Socratic Tutor attachment. The GenMed proposal and Project Activity 1 PDF were read before implementation. The documents describe the broader project and university deliverables; your request defines this patient-only frontend scope.
 
-All code below has already been written into D:\genmed. No package was added. Your main.jsx already wraps App in BrowserRouter and imports index.css, so it needs no change. Do not add a second BrowserRouter. Each block below contains the entire named file; copy only the code block into that file if recreating the project.
+All code below has already been written into D:\genmed\frontend. No package was added. Your main.jsx already wraps App in BrowserRouter and imports index.css, so it needs no change. Do not add a second BrowserRouter. Each block below contains the entire named file; copy only the code block into that file if recreating the project.
 
 Medicine records are illustrative prototype fixtures, not verified catalog records. Similar names do not establish clinical interchangeability. Groups match active ingredient, strength, form, and pack size for consistent sample price comparisons.
 
-## src/index.css
+## frontend/src/index.css
 
 ```css
 @import './styles/app.css';
@@ -92,7 +92,7 @@ svg { flex-shrink: 0; vertical-align: middle; }
 }
 ```
 
-## src/App.jsx
+## frontend/src/App.jsx
 
 ```jsx
 import { useEffect, useRef } from 'react';
@@ -131,7 +131,7 @@ export default function App() {
 }
 ```
 
-## src/context/AuthContext.jsx
+## frontend/src/context/AuthContext.jsx
 
 ```jsx
 import { createContext, useContext, useEffect, useRef, useState } from 'react';
@@ -175,7 +175,7 @@ export function AuthProvider({ children }) {
 export function useAuth() { return useContext(AuthContext); }
 ```
 
-## src/components/Icon.jsx
+## frontend/src/components/Icon.jsx
 
 ```jsx
 export default function Icon({ name = 'cross', size = 22 }) {
@@ -195,7 +195,7 @@ export default function Icon({ name = 'cross', size = 22 }) {
 }
 ```
 
-## src/components/Navbar.jsx
+## frontend/src/components/Navbar.jsx
 
 ```jsx
 import { useState } from 'react';
@@ -223,7 +223,7 @@ export default function Navbar() {
 }
 ```
 
-## src/components/Footer.jsx
+## frontend/src/components/Footer.jsx
 
 ```jsx
 import { Link } from 'react-router-dom';
@@ -234,7 +234,7 @@ export default function Footer() {
 }
 ```
 
-## src/components/ProtectedRoute.jsx
+## frontend/src/components/ProtectedRoute.jsx
 
 ```jsx
 import { Navigate } from 'react-router-dom';
@@ -247,7 +247,7 @@ export default function ProtectedRoute({ children }) {
 }
 ```
 
-## src/components/PasswordInput.jsx
+## frontend/src/components/PasswordInput.jsx
 
 ```jsx
 import { useState } from 'react';
@@ -263,7 +263,7 @@ export default function PasswordInput({ id, label, error, newPassword = false, h
 }
 ```
 
-## src/components/SearchBar.jsx
+## frontend/src/components/SearchBar.jsx
 
 ```jsx
 import Icon from './Icon';
@@ -273,7 +273,7 @@ export default function SearchBar({ value, onChange, searching }) {
 }
 ```
 
-## src/components/MedicineCard.jsx
+## frontend/src/components/MedicineCard.jsx
 
 ```jsx
 import Icon from './Icon';
@@ -292,7 +292,7 @@ export default function MedicineCard({ medicine, maximum, minimum, matched }) {
 }
 ```
 
-## src/pages/Home.jsx
+## frontend/src/pages/Home.jsx
 
 ```jsx
 import { Link } from 'react-router-dom';
@@ -316,7 +316,7 @@ export default function Home() {
 }
 ```
 
-## src/pages/Login.jsx
+## frontend/src/pages/Login.jsx
 
 ```jsx
 import { useEffect, useRef, useState } from 'react';
@@ -388,7 +388,7 @@ export default function Login() {
 }
 ```
 
-## src/pages/Search.jsx
+## frontend/src/pages/Search.jsx
 
 ```jsx
 import { useEffect, useMemo, useState } from 'react';
@@ -443,7 +443,7 @@ export default function Search() {
 }
 ```
 
-## src/pages/NotFound.jsx
+## frontend/src/pages/NotFound.jsx
 
 ```jsx
 import { Link } from 'react-router-dom';
@@ -454,7 +454,7 @@ export default function NotFound() {
 }
 ```
 
-## src/data/medicines.js
+## frontend/src/data/medicines.js
 
 ```javascript
 // Sample data for prototype, real data will come from the DRAP database.
@@ -484,7 +484,7 @@ export function comparisonKey(item) {
 }
 ```
 
-## src/styles/app.css
+## frontend/src/styles/app.css
 
 ```css
 .container { width: min(1160px, calc(100% - 40px)); margin-inline: auto; }
@@ -681,19 +681,19 @@ dd { margin: 0; text-align: right; }
 }
 ```
 
-## vercel.json
+## frontend/vercel.json
 
 ```json
 {"rewrites":[{"source":"/(.*)","destination":"/index.html"}]}
 ```
 
-## public/_redirects
+## frontend/public/_redirects
 
 ```text
 /* /index.html 200
 ```
 
-## index.html
+## frontend/index.html
 
 ```html
 <!doctype html>
@@ -712,7 +712,7 @@ dd { margin: 0; text-align: right; }
 </html>
 ```
 
-## public/genmed.svg
+## frontend/public/genmed.svg
 
 ```svg
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40"><rect width="40" height="40" rx="11" fill="#08796b"/><path d="M16 8h8v8h8v8h-8v8h-8v-8H8v-8h8z" fill="white"/></svg>
@@ -740,7 +740,7 @@ Hiding UI elements is not a security control. Real enforcement (authentication, 
 Ye folders aur files is workspace mein pehle hi bana diye gaye hain. Agar kisi doosre folder mein code copy kar rahe hain, yeh commands chala sakte hain:
 
 ```powershell
-Set-Location D:\genmed
+Set-Location D:\genmed\frontend
 New-Item -ItemType Directory -Force -Path src\context, src\components, src\pages, src\data, src\styles, public | Out-Null
 npm run dev
 ```
@@ -748,7 +748,7 @@ npm run dev
 Terminal mein diya gaya local URL browser mein kholein. Server band karne ke liye Ctrl+C dabayein. Doosre PowerShell terminal mein production build aur code check karein:
 
 ```powershell
-Set-Location D:\genmed
+Set-Location D:\genmed\frontend
 npm run lint
 npm run build
 npm run preview
@@ -775,8 +775,8 @@ Local frontend is complete. A public deployment and another group member's usabi
 
 1. Push the project to your chosen Git repository, keeping node_modules and dist excluded as usual.
 2. Import that repository in either Vercel or Netlify.
-3. Use the Vite preset, build command `npm run build`, and output/publish directory `dist`. No environment variables or secrets are required.
-4. Vercel uses the root vercel.json. Vite copies public/_redirects into dist/_redirects for Netlify.
+3. Set the Vercel Root Directory or Netlify Base directory to `frontend`. Use the Vite preset, build command `npm run build`, and output/publish directory `dist`. No environment variables or secrets are required.
+4. Vercel uses frontend/vercel.json within the selected frontend root. Vite copies public/_redirects into dist/_redirects for Netlify.
 5. Deploy, save the resulting public URL, and test direct visits and refresh on `/`, `/login`, `/search`, and a made-up route. Refresh on `/search` should open Login because demo state resets; it should not show the hosting provider's 404.
 
 These build and deployment settings follow the [official Vite static deployment guide](https://vite.dev/guide/static-deploy.html).
