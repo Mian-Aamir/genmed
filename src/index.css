@@ -1,10 +1,41 @@
-* {
-  box-sizing: border-box;
+@import './styles/app.css';
+:root {
+  font-family: 'Segoe UI', Arial, sans-serif;
+  color: #163d39;
+  background: #f7faf9;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  --primary: #08796b;
+  --primary-dark: #075b51;
+  --ink: #163d39;
+  --muted: #536b66;
+  --surface: #fff;
+  --background: #f7faf9;
+  --border: #d8e5df;
+  --mint: #e9f5ef;
+  --saving: #e7f2c9;
+  --error: #b42318;
+  --shadow: 0 12px 32px #173e3910;
+  --space-1: .5rem;
+  --space-2: 1rem;
+  --space-3: 1.5rem;
+  --space-4: 2rem;
+  --space-5: 3rem;
 }
-
-body {
-  margin: 0;
-  font-family: Arial, Helvetica, sans-serif;
-  background: #f4f8f7;
-  color: #1f2933;
+* { box-sizing: border-box; }
+body { margin: 0; min-width: 320px; }
+button, input, select { font: inherit; }
+button, a { touch-action: manipulation; }
+button { cursor: pointer; }
+button:disabled { cursor: not-allowed; opacity: .65; }
+a { color: var(--primary-dark); text-underline-offset: 4px; }
+button, a { transition: background .18s ease, box-shadow .18s ease; }
+:focus-visible { outline: 3px solid #986700; outline-offset: 4px; }
+h1, h2, h3, p { margin-top: 0; }
+h1, h2, h3 { line-height: 1.15; letter-spacing: -.035em; }
+p { line-height: 1.7; }
+svg { flex-shrink: 0; vertical-align: middle; }
+::selection { background: #c9eadc; }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition: none !important; animation: none !important; scroll-behavior: auto !important; }
 }
