@@ -8,12 +8,15 @@ import Home from './pages/Home';
 import Login from './pages/Login';
 import Search from './pages/Search';
 import NotFound from './pages/NotFound';
+import Dashboard from './pages/Dashboard';
+import PatientDashboard from './pages/PatientDashboard';
+import DoctorDashboard from './pages/DoctorDashboard';
 
 export default function App() {
   const { pathname } = useLocation();
   const main = useRef(null);
   useEffect(() => {
-    const titles = { '/': 'Medicine choices, made clearer', '/login': 'Your account', '/search': 'Find medicine alternatives' };
+    const titles = { '/': 'Medicine choices, made clearer', '/login': 'Your account', '/search': 'Find medicine alternatives', '/dashboard': 'Your dashboard', '/patient': 'Patient dashboard', '/doctor': 'Doctor dashboard' };
     document.title = `${titles[pathname] || 'Page not found'} | GenMed`;
     main.current?.focus();
     window.scrollTo(0, 0);
@@ -25,7 +28,10 @@ export default function App() {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
-        <Route path="/search" element={<ProtectedRoute><Search /></ProtectedRoute>} />
+        <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+        <Route path="/patient" element={<ProtectedRoute role="patient"><PatientDashboard /></ProtectedRoute>} />
+        <Route path="/doctor" element={<ProtectedRoute role="doctor"><DoctorDashboard /></ProtectedRoute>} />
+        <Route path="/search" element={<ProtectedRoute role="patient"><Search /></ProtectedRoute>} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </main>

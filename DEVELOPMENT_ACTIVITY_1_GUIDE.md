@@ -1,3 +1,5 @@
+> Historical Activity 1 snapshot. Activity 2 supersedes its login, registration, session, and routing implementation. Use DEVELOPMENT_ACTIVITY_2_GUIDE.md and current frontend source. Do not paste the old authentication code over Activity 2.
+
 # GenMed Development Activity 1 — Complete code and setup
 
 ```text

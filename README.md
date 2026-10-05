@@ -1,6 +1,6 @@
 # GenMed
 
-Patient-facing medicine comparison prototype built with React, Vite, React Router, and plain CSS.
+Patient and Doctor role-based medicine comparison prototype (Development Activity 2) built with React, Vite, React Router, and plain CSS.
 
 ## Project structure
 
@@ -34,6 +34,7 @@ For a fresh clone, run `npm ci` in `frontend` first. Existing dependencies have 
 
 ```powershell
 Set-Location D:\genmed\frontend
+npm test
 npm run lint
 npm run build
 npm run preview
@@ -45,4 +46,4 @@ npm run preview
 - Netlify: set Base directory to `frontend`, build command to `npm run build`, and publish directory to `dist` relative to that base.
 - SPA routing files are `frontend/vercel.json` and `frontend/public/_redirects`.
 
-See DEVELOPMENT_ACTIVITY_1_GUIDE.md for complete source and the manual checklist. Authentication and medicine data are demonstrations; see SECURITY_NOTES.md for backend requirements.
+See DEVELOPMENT_ACTIVITY_2_GUIDE.md for demo credentials, requirement coverage, testing results, and the demonstration checklist. DEVELOPMENT_ACTIVITY_1_GUIDE.md is a historical snapshot; its old authentication code must not replace the current source. Authentication and medicine data are demonstrations; see SECURITY_NOTES.md for backend requirements.

@@ -14,12 +14,12 @@ export default function Footer() {
         <nav aria-label="Footer navigation">
           <Link to="/">Home</Link>
           <Link to="/login">Account</Link>
-          <Link to="/search">Find medicine</Link>
+          <Link to="/dashboard">My dashboard</Link>
         </nav>
         <p className="fine-print">
           © {new Date().getFullYear()} GenMed Pakistan
           <br />
-          Patient prototype · Development Activity 1
+          Role-based prototype · Development Activity 2
         </p>
       </div>
     </footer>

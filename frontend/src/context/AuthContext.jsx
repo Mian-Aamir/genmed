@@ -1,39 +1,45 @@
-import { createContext, useContext, useEffect, useRef, useState } from 'react';
+import { createContext, useContext, useEffect, useState } from 'react';
+import { createDemoService } from '../services/demoService';
+
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
   // SECURITY: Demo only, real authentication (JWT + hashing) will be built in the backend.
-  // SECURITY: Only a display name is kept in memory. No credentials, tokens, or browser storage.
-  const [user, setUser] = useState(null);
+  // All submitted values and session state stay in memory; no cookies/storage or sensitive logs.
+  const [service] = useState(() => createDemoService());
+  const [session, setSession] = useState(() => service.snapshot());
   const [remaining, setRemaining] = useState(0);
-  const attempts = useRef(0);
-  const lockedUntil = useRef(0);
   useEffect(() => {
-    const timer = window.setInterval(() => {
-      setRemaining(Math.max(0, Math.ceil((lockedUntil.current - Date.now()) / 1000)));
-    }, 250);
+    const timer = window.setInterval(() => setRemaining(service.remainingSeconds()), 250);
     return () => window.clearInterval(timer);
-  }, []);
-  function isLocked() { return Date.now() < lockedUntil.current; }
-  function recordFailure() {
-    if (isLocked()) return;
-    // SECURITY: Real rate limiting must be done on the server; this in-memory demo is bypassable.
-    // Keeping this in the provider preserves throttling across navigation and form toggles.
-    attempts.current += 1;
-    if (attempts.current >= 5) {
-      lockedUntil.current = Date.now() + 30000;
-      attempts.current = 0;
-      setRemaining(30);
-    }
+  }, [service]);
+
+  function refresh() {
+    setSession(service.snapshot());
+    setRemaining(service.remainingSeconds());
   }
-  function signIn(name) {
-    if (isLocked()) return;
-    attempts.current = 0;
-    setUser({ name: name || 'Patient' });
+  function login(email, password) {
+    const result = service.login(email, password);
+    refresh();
+    return result;
   }
-  function logout() { setUser(null); }
-  return <AuthContext.Provider value={{ user, signIn, logout, recordFailure, isLocked, remaining }}>{children}</AuthContext.Provider>;
+  function logout() { service.logout(); refresh(); }
+  function recordFailure() { service.recordFailure(); refresh(); }
+  function requestReview(medicineId) {
+    const result = service.requestReview(medicineId);
+    refresh();
+    return result;
+  }
+  function decideReview(id, status, note) {
+    const result = service.decideReview(id, status, note);
+    refresh();
+    return result;
+  }
+  return <AuthContext.Provider value={{ ...session, login, logout, remaining, recordFailure,
+    isLocked: () => service.remainingSeconds() > 0, requestReview, decideReview }}>
+    {children}
+  </AuthContext.Provider>;
 }
-// The context hook intentionally shares this small module with its provider.
+
 // eslint-disable-next-line react-refresh/only-export-components
 export function useAuth() { return useContext(AuthContext); }
