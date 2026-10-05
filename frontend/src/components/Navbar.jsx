@@ -1,10 +1,12 @@
 import { useState } from "react";
-import { Link, NavLink, useLocation } from "react-router-dom";
+import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import Icon from "./Icon";
+import { dashboardPath } from '../data/demoUsers';
 
 export default function Navbar() {
   const { user, logout } = useAuth();
+  const navigate = useNavigate();
   const { pathname } = useLocation();
   const [openPath, setOpenPath] = useState(null);
   const open = openPath === pathname;
@@ -41,17 +43,19 @@ export default function Navbar() {
           <NavLink to="/" end onClick={close}>
             Home
           </NavLink>
-          <NavLink to="/search" onClick={close}>
+          {(!user || user.role === 'patient') && <NavLink to="/search" onClick={close}>
             Find medicine
-          </NavLink>
+          </NavLink>}
           {user ? (
             <>
-              <span className="welcome">Welcome, {user.name}</span>
+              <NavLink to={dashboardPath(user.role)} onClick={close}>My dashboard</NavLink>
+              <span className="welcome">{user.name} · {user.role === 'doctor' ? 'Doctor' : 'Patient'}</span>
               <button
                 className="button secondary small"
                 onClick={() => {
                   logout();
                   close();
+                  navigate('/login', { replace: true });
                 }}
               >
                 Logout
