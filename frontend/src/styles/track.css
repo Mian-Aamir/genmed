@@ -1,1 +1,109 @@
-/* Module 2 placeholder. Tracking styles belong to the Module 2 owner. */
+.track-page .track-filters {
+  display: grid;
+  gap: var(--space-2);
+  align-items: start;
+}
+
+.track-page .track-filters .field {
+  margin: 0;
+  min-width: 0;
+}
+
+.track-page .track-table-wrap {
+  max-width: 100%;
+  overflow-x: auto;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+}
+
+.track-page .track-table {
+  width: 100%;
+  min-width: 760px;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 14px;
+}
+
+.track-page .track-table th,
+.track-page .track-table td {
+  padding: var(--space-2);
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+  overflow-wrap: anywhere;
+  max-width: 240px;
+}
+
+.track-page .track-table thead {
+  background: var(--mint);
+  color: var(--primary-dark);
+}
+
+.track-page .track-table tbody tr:last-child > * {
+  border-bottom: 0;
+}
+
+.track-page .track-table tbody tr:hover,
+.track-page .track-table tbody tr:focus-within {
+  background: var(--background);
+}
+
+.track-page .track-date,
+.track-page .track-table .button {
+  white-space: nowrap;
+}
+
+.track-page .track-status {
+  display: inline-block;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.track-page .track-status-pending { color: #754b08; background: #fff1ce; }
+.track-page .track-status-approved { color: #075b51; background: #e9f5ef; }
+.track-page .track-status-dispatched { color: #254d88; background: #eaf1ff; }
+.track-page .track-status-delivered { color: #405717; background: #e7f2c9; }
+
+.track-page .track-details {
+  margin-top: var(--space-3);
+  border-left: 4px solid var(--primary);
+}
+
+.track-page .track-details h2 {
+  margin: 0;
+  scroll-margin-top: 180px;
+}
+
+.track-page .track-detail-grid {
+  display: grid;
+  gap: var(--space-3);
+  margin-bottom: 0;
+}
+
+.track-page .track-detail-grid dt {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.track-page .track-detail-grid dd {
+  margin: 6px 0 0;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+@media (min-width: 700px) {
+  .track-page .track-filters {
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) auto;
+  }
+
+  .track-page .track-filters > button {
+    margin-top: 27px;
+  }
+
+  .track-page .track-detail-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
