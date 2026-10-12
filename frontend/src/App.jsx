@@ -11,30 +11,71 @@ import NotFound from './pages/NotFound';
 import Dashboard from './pages/Dashboard';
 import PatientDashboard from './pages/PatientDashboard';
 import DoctorDashboard from './pages/DoctorDashboard';
+import RequestMedicine from './pages/RequestMedicine';
+import TrackRequests from './pages/TrackRequests';
 
 export default function App() {
   const { pathname } = useLocation();
   const main = useRef(null);
+
   useEffect(() => {
-    const titles = { '/': 'Medicine choices, made clearer', '/login': 'Your account', '/search': 'Find medicine alternatives', '/dashboard': 'Your dashboard', '/patient': 'Patient dashboard', '/doctor': 'Doctor dashboard' };
+    const titles = {
+      '/': 'Medicine choices, made clearer',
+      '/login': 'Your account',
+      '/search': 'Find medicine alternatives',
+      '/dashboard': 'Your dashboard',
+      '/patient': 'Patient dashboard',
+      '/doctor': 'Doctor dashboard',
+      '/request': 'Submit Medicine Request',
+      '/track': 'Track Requests',
+    };
     document.title = `${titles[pathname] || 'Page not found'} | GenMed`;
     main.current?.focus();
     window.scrollTo(0, 0);
   }, [pathname]);
-  return <AuthProvider>
-    <a className="skip-link" href="#main">Skip to content</a>
-    <Navbar />
-    <main id="main" ref={main} tabIndex={-1}>
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-        <Route path="/patient" element={<ProtectedRoute role="patient"><PatientDashboard /></ProtectedRoute>} />
-        <Route path="/doctor" element={<ProtectedRoute role="doctor"><DoctorDashboard /></ProtectedRoute>} />
-        <Route path="/search" element={<ProtectedRoute role="patient"><Search /></ProtectedRoute>} />
-        <Route path="*" element={<NotFound />} />
-      </Routes>
-    </main>
-    <Footer />
-  </AuthProvider>;
+
+  return (
+    <AuthProvider>
+      <a className="skip-link" href="#main">Skip to content</a>
+      <Navbar />
+      <main id="main" ref={main} tabIndex={-1}>
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/dashboard" element={
+            <ProtectedRoute>
+              <Dashboard />
+            </ProtectedRoute>
+          } />
+          <Route path="/patient" element={
+            <ProtectedRoute role="patient">
+              <PatientDashboard />
+            </ProtectedRoute>
+          } />
+          <Route path="/doctor" element={
+            <ProtectedRoute role="doctor">
+              <DoctorDashboard />
+            </ProtectedRoute>
+          } />
+          <Route path="/search" element={
+            <ProtectedRoute role="patient">
+              <Search />
+            </ProtectedRoute>
+          } />
+          <Route path="/request" element={
+            <ProtectedRoute role="patient">
+              <RequestMedicine />
+            </ProtectedRoute>
+          } />
+          <Route path="/track" element={
+            <ProtectedRoute role="patient">
+              <TrackRequests />
+            </ProtectedRoute>
+          } />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </main>
+      <Footer />
+    </AuthProvider>
+  );
 }
