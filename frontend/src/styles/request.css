@@ -1,0 +1,57 @@
+.medicine-request-page .request-form {
+  max-width: 760px;
+}
+
+.medicine-request-page .request-success {
+  padding: var(--space-2);
+  color: var(--primary-dark);
+  background: var(--mint);
+  border: 1px solid var(--primary);
+  border-radius: 8px;
+}
+
+.medicine-request-page input[readonly] {
+  background: var(--background);
+  color: var(--muted);
+}
+
+.medicine-request-page .request-form-row {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.medicine-request-page .request-list {
+  display: grid;
+  gap: var(--space-2);
+  padding: 0;
+  list-style: none;
+}
+
+.medicine-request-page .request-list > li {
+  overflow-wrap: anywhere;
+}
+
+.medicine-request-page .request-notes {
+  white-space: pre-wrap;
+}
+
+@media (min-width: 650px) {
+  .medicine-request-page .request-form-row,
+  .medicine-request-page .request-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* Keep the foundation navigation usable with the two added patient links. */
+@media (min-width: 950px) {
+  .activity3-header .nav-wrap {
+    flex-wrap: wrap;
+    row-gap: 12px;
+    padding-block: 14px;
+  }
+
+  .activity3-header .navigation {
+    flex-wrap: wrap;
+    gap: 18px;
+  }
+}
