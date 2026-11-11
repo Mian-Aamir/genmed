@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { CATEGORIES, addOwnRequest, listOwnRequests } from '../services/requestStore';
+import SecureFileSelection from '../components/SecureFileSelection';
 import '../styles/request.css';
 
 const emptyFields = { medicine: '', category: '', quantity: '', notes: '' };
@@ -10,6 +11,8 @@ export default function RequestMedicine() {
   const { user } = useAuth();
   const [fields, setFields] = useState({ ...emptyFields });
   const [feedback, setFeedback] = useState(null);
+  // Remounts the file selection after a successful request so no file stays selected.
+  const [fileKey, setFileKey] = useState(0);
   const result = listOwnRequests(user);
   const requests = result.ok ? result.requests : [];
   const errors = feedback?.errors || {};
@@ -27,6 +30,7 @@ export default function RequestMedicine() {
     setFeedback(outcome);
     if (outcome.ok) {
       setFields({ ...emptyFields });
+      setFileKey(previous => previous + 1);
     } else if (outcome.errors) {
       const firstField = Object.keys(outcome.errors)[0];
       event.currentTarget.elements.namedItem(firstField)?.focus();
@@ -34,6 +38,9 @@ export default function RequestMedicine() {
   }
 
   // SECURITY: React escapes all displayed request text; never interpret notes as HTML.
+  // Activity 5 Task 2: medicine names and notes are rendered as JSX text ({request.notes}),
+  // which React inserts like textContent. No dangerouslySetInnerHTML, innerHTML or eval is used,
+  // so input such as <script>alert('xss')</script> is displayed literally and never runs.
   return (
     <section className="container dashboard-page medicine-request-page">
       <span className="eyebrow">PATIENT WORKSPACE · MEDICINE REQUESTS</span>
@@ -58,7 +65,9 @@ export default function RequestMedicine() {
         </div>
         <div className="field">
           <label htmlFor="medicine">Medicine Name</label>
-          <input id="medicine" name="medicine" value={fields.medicine} onChange={changeField} maxLength={120} required aria-invalid={Boolean(errors.medicine)} aria-describedby="medicine-error" />
+          {/* SECURITY: autoComplete off so medicine names are not kept in browser form history. */}
+          <input id="medicine" name="medicine" value={fields.medicine} onChange={changeField} maxLength={120} required autoComplete="off" aria-invalid={Boolean(errors.medicine)} aria-describedby="medicine-hint medicine-error" />
+          <span id="medicine-hint" className="field-hint">Required, 3–120 characters. Letters, numbers, spaces and . , &apos; ( ) / % + - only.</span>
           <span id="medicine-error" className="field-error">{errors.medicine}</span>
         </div>
         <div className="request-form-row">
@@ -74,16 +83,17 @@ export default function RequestMedicine() {
           </div>
           <div className="field">
             <label htmlFor="quantity">Quantity</label>
-            <input id="quantity" name="quantity" type="text" inputMode="numeric" value={fields.quantity} onChange={changeField} maxLength={6} required aria-invalid={Boolean(errors.quantity)} aria-describedby="quantity-error" />
+            <input id="quantity" name="quantity" type="text" inputMode="numeric" value={fields.quantity} onChange={changeField} maxLength={6} required autoComplete="off" aria-invalid={Boolean(errors.quantity)} aria-describedby="quantity-error" />
             <span id="quantity-error" className="field-error">{errors.quantity}</span>
           </div>
         </div>
         <div className="field">
           <label htmlFor="notes">Notes (optional)</label>
-          <textarea id="notes" name="notes" value={fields.notes} onChange={changeField} maxLength={200} rows={3} aria-invalid={Boolean(errors.notes)} aria-describedby="notes-count notes-error" />
+          <textarea id="notes" name="notes" value={fields.notes} onChange={changeField} maxLength={200} rows={3} autoComplete="off" aria-invalid={Boolean(errors.notes)} aria-describedby="notes-count notes-error" />
           <span id="notes-count" className="field-hint">{fields.notes.length}/200 characters</span>
           <span id="notes-error" className="field-error">{errors.notes}</span>
         </div>
+        <SecureFileSelection key={fileKey} />
         <button className="button" type="submit">Submit Request</button>
       </form>
       <section className="request-section" aria-labelledby="own-requests-heading">
