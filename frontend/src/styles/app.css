@@ -1046,3 +1046,15 @@ textarea { font: inherit; width: 100%; resize: vertical; border: 1px solid #afc5
 @media (min-width: 800px) {
   .dashboard-grid, .review-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
+
+/* Activity 5 Task 5 (Muhammad Aamir): password strength feedback below the Login password field. */
+.strength { margin: -6px 0 18px; }
+.strength p { margin: 6px 0 0; font-size: 14px; line-height: 1.5; }
+.strength-meter { display: grid; grid-template-columns: repeat(6, 1fr); gap: 4px; }
+.strength-meter span { height: 8px; border-radius: 4px; background: var(--border); }
+.strength-weak .filled { background: var(--error); }
+.strength-moderate .filled { background: #b07800; }
+.strength-strong .filled { background: var(--primary); }
+.strength-label.strength-weak { color: var(--error); }
+.strength-label.strength-moderate { color: #7a5200; }
+.strength-label.strength-strong { color: var(--primary-dark); }

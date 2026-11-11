@@ -3,12 +3,29 @@ import { Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { demoUsers, dashboardPath } from '../data/demoUsers';
 import PasswordInput from '../components/PasswordInput';
+import PasswordStrengthMeter from '../components/PasswordStrengthMeter';
 import Icon from '../components/Icon';
+
+// Activity 5 Task 5: call the instructor-provided browser global loaded by index.html.
+function evaluatePasswordStrength(password) {
+  // SECURITY: The helper is a plain <script> global, not an imported module. Fail safely if it is missing.
+  if (typeof window.checkPasswordStrength !== 'function') return null;
+  return window.checkPasswordStrength(password);
+}
 
 export default function Login() {
   const { user, login, recordFailure, isLocked, remaining } = useAuth();
   const [errors, setErrors] = useState({});
+  // SECURITY: Only the helper's result (level/score/message) is kept in state, never the password.
+  const [strength, setStrength] = useState(null);
+  const helperLoaded = typeof window.checkPasswordStrength === 'function';
   if (user) return <Navigate to={dashboardPath(user.role)} replace />;
+
+  function onPasswordChange(event) {
+    // Activity 5 Task 5: evaluate on every entry or modification of the password.
+    const value = event.target.value;
+    setStrength(value ? evaluatePasswordStrength(value) : null);
+  }
 
   function submit(event) {
     event.preventDefault();
@@ -22,6 +39,8 @@ export default function Login() {
     if (email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) next.email = 'Enter a valid email address.';
     if (!password || password.length > 128) next.password = 'Enter the demo password (maximum 128 characters).';
     form.elements.namedItem('password').value = '';
+    // SECURITY: The password field is cleared on every submit, so its strength feedback is cleared too.
+    setStrength(null);
     if (Object.keys(next).length) {
       recordFailure();
       setErrors({ ...next, form: 'Invalid email or password.' });
@@ -65,7 +84,9 @@ export default function Login() {
             <input id="email" name="email" type="email" autoComplete="username" maxLength={254} required aria-invalid={Boolean(errors.email)} aria-describedby="email-error" />
             <span id="email-error" className="field-error">{errors.email}</span>
           </div>
-          <PasswordInput id="password" label="Password" error={errors.password} hint="Enter the exact password for your chosen demo account." />
+          <PasswordInput id="password" label="Password" error={errors.password} hint="Enter the exact password for your chosen demo account."
+            onChange={onPasswordChange} describedBy="password-strength" />
+          <PasswordStrengthMeter id="password-strength" result={strength} unavailable={!helperLoaded} />
           <button type="submit" className="button full-width">Login <Icon name="arrow" size={18} /></button>
         </fieldset>
         <div className="form-status" role="status" aria-live="polite">
