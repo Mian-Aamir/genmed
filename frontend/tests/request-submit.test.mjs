@@ -1,7 +1,7 @@
 import test, { beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
 import { demoUsers } from '../src/data/demoUsers.js';
-import { validateRequest } from '../src/services/requestValidation.js';
+import { MEDICINE_NAME_PATTERN, validateRequest, validateReview } from '../src/services/requestValidation.js';
 import { CATEGORIES, addOwnRequest, listOwnRequests, resetRequestStore } from '../src/services/requestStore.js';
 
 const account = demoUsers.find(user => user.role === 'patient');
@@ -63,4 +63,35 @@ test('script-like notes remain plain text; the UI must render them using React e
   const result = addOwnRequest(patient, { ...valid, notes });
   assert.equal(result.ok, true);
   assert.equal(result.request.notes, notes);
+});
+
+// ---------------- Activity 5 Task 1 (Ammar Ahmad) ----------------
+test('A5 medicine name accepts real formats and is trimmed', () => {
+  for (const medicine of ['Cetirizine 5 mg / 5 mL', 'Co-Amoxiclav (625)', "St. John's Wort", 'ORS 0.9% + Zinc']) {
+    const result = validateRequest({ ...valid, medicine: `  ${medicine}  ` }, CATEGORIES);
+    assert.equal(result.ok, true, medicine);
+    assert.equal(result.values.medicine, medicine);
+  }
+  assert.ok(MEDICINE_NAME_PATTERN.test('Paracetamol 500mg'));
+});
+
+test('A5 medicine name rejects markup and unexpected characters without saving', () => {
+  for (const medicine of ['<script>alert("xss")</script>', 'Panadol<b>', 'Brufen"onmouseover', '{{7*7}}', '-Panadol']) {
+    const outcome = addOwnRequest(patient, { ...valid, medicine });
+    assert.equal(outcome.ok, false, medicine);
+    assert.match(outcome.errors.medicine, /letters, numbers/);
+  }
+  assert.equal(listOwnRequests(patient).requests.length, 3);
+});
+
+test('A5 doctor review requires an allowlisted decision and a 1-300 character trimmed note', () => {
+  assert.equal(validateReview('', 'Check dosage').errors.decision, 'Choose a review decision.');
+  assert.equal(validateReview('approve-all', 'Check dosage').ok, false);
+  assert.equal(validateReview('reviewed', '').errors.note, 'Internal note is required.');
+  assert.equal(validateReview('reviewed', '    ').errors.note, 'Internal note is required.');
+  assert.equal(validateReview('reviewed', undefined).ok, false);
+  assert.match(validateReview('reviewed', 'x'.repeat(301)).errors.note, /300 characters or fewer/);
+  assert.equal(validateReview('discussion', 'x').ok, true);
+  assert.equal(validateReview('reviewed', 'x'.repeat(300)).ok, true);
+  assert.equal(validateReview('discussion', '  Check dosage.  ').values.note, 'Check dosage.');
 });

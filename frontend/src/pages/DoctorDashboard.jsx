@@ -2,14 +2,25 @@ import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import ReviewSummary from '../components/ReviewSummary';
 import Icon from '../components/Icon';
+import { REVIEW_NOTE_MAX, validateReview } from '../services/requestValidation';
 
 function ReviewCard({ request }) {
   const { decideReview } = useAuth();
   const [note, setNote] = useState('');
   const [result, setResult] = useState(null);
+  const [errors, setErrors] = useState({});
   function submit(event) {
     event.preventDefault();
-    const status = new FormData(event.currentTarget).get('decision');
+    const form = event.currentTarget;
+    const status = String(new FormData(form).get('decision') || '');
+    // Activity 5 Task 1: validate first and show an accessible message under each field.
+    const validation = validateReview(status, note);
+    setErrors(validation.errors);
+    if (!validation.ok) {
+      setResult(null);
+      form.elements.namedItem(validation.errors.decision ? 'decision' : 'note')?.focus();
+      return;
+    }
     const outcome = decideReview(request.id, status, note);
     setResult(outcome);
     if (outcome.ok) setNote('');
@@ -17,18 +28,21 @@ function ReviewCard({ request }) {
   return <article className="dashboard-panel">
     <ReviewSummary request={request} />
     <p className="fine-print">Patient reference: {request.patientReference}<br />Contact: {request.maskedEmail} (masked)</p>
-    <div className="internal-note"><strong>Doctor-only internal note</strong><p>{request.internalNote || 'No internal note yet.'}</p></div>
-    {request.status === 'pending' && <form onSubmit={submit}>
+    <div className="internal-note"><strong>Doctor-only internal note</strong>{/* SECURITY: Doctor notes are user input, rendered as escaped React text. */}<p>{request.internalNote || 'No internal note yet.'}</p></div>
+    {request.status === 'pending' && <form onSubmit={submit} noValidate>
       <div className="field"><label htmlFor={`decision-${request.id}`}>Demo review decision</label>
-        <select id={`decision-${request.id}`} name="decision" defaultValue="" required>
+        <select id={`decision-${request.id}`} name="decision" defaultValue="" required aria-invalid={Boolean(errors.decision)} aria-describedby={`decision-error-${request.id}`} onChange={() => setErrors(previous => ({ ...previous, decision: undefined }))}>
           <option value="" disabled>Choose a decision</option>
           <option value="reviewed">Mark reviewed (demo only)</option>
           <option value="discussion">Needs discussion</option>
         </select>
+        <span id={`decision-error-${request.id}`} className="field-error">{errors.decision}</span>
       </div>
       <div className="field"><label htmlFor={`note-${request.id}`}>Internal note</label>
-        <textarea id={`note-${request.id}`} value={note} onChange={event => setNote(event.target.value.slice(0, 300))} maxLength={300} rows={3} required aria-describedby={`note-help-${request.id}`} />
-        <span id={`note-help-${request.id}`} className="field-hint">{note.length}/300 · Use fictional information only. Visible to the Doctor role.</span>
+        {/* SECURITY: autoComplete off so internal clinical notes are not kept in browser form history. */}
+        <textarea id={`note-${request.id}`} name="note" value={note} onChange={event => { setNote(event.target.value.slice(0, REVIEW_NOTE_MAX)); setErrors(previous => ({ ...previous, note: undefined })); }} maxLength={REVIEW_NOTE_MAX} rows={3} required autoComplete="off" aria-invalid={Boolean(errors.note)} aria-describedby={`note-help-${request.id} note-error-${request.id}`} />
+        <span id={`note-help-${request.id}`} className="field-hint">{note.length}/{REVIEW_NOTE_MAX} · Required, 1–300 characters. Use fictional information only. Visible to the Doctor role.</span>
+        <span id={`note-error-${request.id}`} className="field-error">{errors.note}</span>
       </div>
       <button type="submit" className="button">Save demo review</button>
     </form>}
