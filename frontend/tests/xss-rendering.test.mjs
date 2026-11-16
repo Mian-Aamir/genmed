@@ -1,18 +1,15 @@
 // Activity 5 Task 2 — Ammar Ahmad (23P-3071): user text is handled as data, never as HTML.
-import test, { beforeEach } from 'node:test';
+import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { demoUsers } from '../src/data/demoUsers.js';
-import { createDemoService } from '../src/services/demoService.js';
-import { addOwnRequest, getOwnRequest, resetRequestStore } from '../src/services/requestStore.js';
+import { validateRequest, validateReview } from '../src/services/requestValidation.js';
+import { CATEGORIES } from '../src/services/requestStore.js';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const account = demoUsers.find(user => user.role === 'patient');
-const patient = { id: account.id, name: account.name, role: 'patient' };
 const PAYLOADS = [
   '<script>alert("xss")</script>',
   "<script>alert('xss')</script>",
@@ -21,13 +18,13 @@ const PAYLOADS = [
   '"><a href="javascript:alert(1)">click</a>',
 ];
 
-beforeEach(() => resetRequestStore());
-
-test('notes containing HTML/script are stored exactly as literal text', () => {
+// Activity 6: the round trip through the API and SQLite is tested in backend/tests
+// (requests.test.mjs and reviews.test.mjs): script text is stored and returned unchanged.
+test('notes containing HTML/script are kept exactly as literal text (no stripping or decoding)', () => {
   for (const notes of PAYLOADS) {
-    const created = addOwnRequest(patient, { medicine: 'Paracetamol 500mg', category: 'Painkiller', quantity: 1, notes });
-    assert.equal(created.ok, true, notes);
-    assert.equal(getOwnRequest(patient, created.request.id).request.notes, notes);
+    const result = validateRequest({ medicine: 'Paracetamol 500mg', category: 'Painkiller', quantity: 1, notes }, CATEGORIES);
+    assert.equal(result.ok, true, notes);
+    assert.equal(result.values.notes, notes);
   }
 });
 
@@ -44,12 +41,10 @@ test('React text rendering (as used by RequestMedicine and TrackRequests) escape
   );
 });
 
-test('doctor internal notes with script text are saved literally', () => {
-  const service = createDemoService();
-  const doctor = demoUsers.find(user => user.role === 'doctor');
-  service.login(doctor.email, doctor.password);
-  assert.equal(service.decideReview('REQ-001', 'reviewed', PAYLOADS[0]).ok, true);
-  assert.equal(service.snapshot().requests.find(item => item.id === 'REQ-001').internalNote, PAYLOADS[0]);
+test('doctor internal notes with script text are kept literally', () => {
+  const result = validateReview('reviewed', PAYLOADS[0]);
+  assert.equal(result.ok, true);
+  assert.equal(result.values.note, PAYLOADS[0]);
 });
 
 test('no source file uses an unsafe HTML or code-execution sink', () => {

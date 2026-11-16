@@ -1,0 +1,25 @@
+{
+  "status": 200,
+  "user": {
+    "id": 1,
+    "name": "Ali Demo",
+    "role": "patient"
+  },
+  "tokenHeader": {
+    "alg": "HS256",
+    "typ": "JWT"
+  },
+  "tokenPayload": {
+    "role": "patient",
+    "iat": 1794816426,
+    "exp": 1794820026,
+    "aud": "genmed-web",
+    "iss": "genmed-api",
+    "sub": "1"
+  },
+  "browserStorageAfterLogin": {
+    "local": [],
+    "session": [],
+    "cookie": ""
+  }
+}

@@ -1,14 +1,14 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { STATUSES, getOwnRequest, listOwnRequests } from '../services/requestStore';
+import { STATUSES } from '../services/requestStore';
 import {
   MAX_REFERENCE_LENGTH, filterRequests, isValidReferenceQuery, isValidStatus,
 } from '../services/trackHelpers';
 import '../styles/track.css';
 
 export default function TrackRequests() {
-  const { user } = useAuth();
+  const { api } = useAuth();
   const [query, setQuery] = useState('');
   const [status, setStatus] = useState('All');
   const [statusError, setStatusError] = useState('');
@@ -17,13 +17,39 @@ export default function TrackRequests() {
   const detailsHeading = useRef(null);
   const detailsTrigger = useRef(null);
 
-  // SECURITY: Read only through session-scoped actions, including every detail lookup.
-  // Re-read on render and route entry so Module 1 submissions appear without a reload.
-  const result = listOwnRequests(user);
+  // Activity 6: the list comes from GET /api/requests and each detail from
+  // GET /api/requests/:reference. SECURITY: The server scopes both to the JWT owner.
+  const [result, setResult] = useState({ ok: true, loading: true, requests: [] });
+  const [detailResult, setDetailResult] = useState(null);
   const visible = result.ok ? filterRequests(result.requests, query, status) : [];
   const validQuery = isValidReferenceQuery(query);
-  const detailResult = selectedId ? getOwnRequest(user, selectedId) : null;
-  const detail = result.ok && detailResult?.ok ? detailResult.request : null;
+  const detail = detailResult?.ok ? detailResult.request : null;
+
+  useEffect(() => {
+    const controller = new AbortController();
+    api('/requests', { signal: controller.signal }).then(response => {
+      if (response.aborted) return;
+      setResult(response.ok
+        ? { ok: true, loading: false, requests: response.data.requests }
+        : { ok: false, loading: false, requests: [], message: response.message });
+    });
+    return () => controller.abort();
+  }, [api]);
+
+  useEffect(() => {
+    if (!selectedId) return undefined;
+    const controller = new AbortController();
+    api(`/requests/${encodeURIComponent(selectedId)}`, { signal: controller.signal }).then(response => {
+      if (response.aborted) return;
+      setDetailResult(response.ok ? { ok: true, request: response.data.request } : { ok: false, message: response.message });
+    });
+    return () => controller.abort();
+  }, [api, selectedId]);
+
+  function openDetails(id) {
+    setDetailResult(null);
+    setSelectedId(id);
+  }
 
   useEffect(() => {
     if (selectedId) detailsHeading.current?.focus();
@@ -64,8 +90,10 @@ export default function TrackRequests() {
         <Link className="button" to="/request">Submit Request</Link>
         <Link className="button secondary" to="/patient">My dashboard</Link>
       </div>
-      <p className="sample-note">Fictional demo records only. Requests stay in this tab and reset on refresh. Statuses do not confirm a real order or medical approval.</p>
-      {!result.ok ? (
+      <p className="sample-note">Fictional demo records saved on the GenMed server. Statuses do not confirm a real order or medical approval.</p>
+      {result.loading ? (
+        <p role="status">Loading your requests…</p>
+      ) : !result.ok ? (
         <p role="alert" className="field-error">{result.message}</p>
       ) : (
         <>
@@ -114,7 +142,9 @@ export default function TrackRequests() {
                 <h2 id="track-details-heading" ref={detailsHeading} tabIndex={-1}>Request details</h2>
                 <button type="button" className="button secondary small" onClick={closeDetails}>Close details</button>
               </div>
-              {detail ? (
+              {!detailResult ? (
+                <p role="status">Loading request…</p>
+              ) : detail ? (
                 <dl className="track-detail-grid">
                   {[
                     ['Reference', detail.id],
@@ -174,7 +204,7 @@ export default function TrackRequests() {
                             aria-expanded={selectedId === request.id}
                             onClick={event => {
                               detailsTrigger.current = event.currentTarget;
-                              setSelectedId(request.id);
+                              openDetails(request.id);
                             }}
                           >
                             View Details

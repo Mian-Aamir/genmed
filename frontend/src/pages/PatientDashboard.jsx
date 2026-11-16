@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { medicines } from '../data/medicines';
@@ -6,14 +6,17 @@ import ReviewSummary from '../components/ReviewSummary';
 import Icon from '../components/Icon';
 
 export default function PatientDashboard() {
-  const { user, requests, requestReview } = useAuth();
+  const { user, requests, requestReview, loadReviews } = useAuth();
+  // Activity 6: always show the latest statuses from GET /api/reviews when the page opens.
+  useEffect(() => { loadReviews(); }, [loadReviews]);
   const [message, setMessage] = useState(null);
 
-  function submit(event) {
+  async function submit(event) {
     event.preventDefault();
     const form = event.currentTarget;
     const medicineId = Number(new FormData(form).get('medicineId'));
-    const result = requestReview(medicineId);
+    // Activity 6: POST /api/reviews. The server sets the owner from the JWT.
+    const result = await requestReview(medicineId);
     setMessage(result);
     if (result.ok) form.reset();
   }
@@ -53,12 +56,12 @@ export default function PatientDashboard() {
           <Icon name="shield" size={32} />
           <h2>Your information, limited by role.</h2>
           <p>You can see only your own requests. Doctor contact views show masked email addresses, and internal review notes are omitted from your view.</p>
-          <p className="fine-print">All records are fictional. This is a frontend access-control demonstration, not a confidential medical system.</p>
+          <p className="fine-print">All records are fictional. Access rules are enforced by the GenMed server; this is still a classroom system, not a confidential medical record.</p>
         </aside>
       </div>
       <section id="my-requests" className="request-section" aria-labelledby="my-requests-title">
         <h2 id="my-requests-title">My review requests</h2>
-        <p>Status updates appear here after the Doctor demo account reviews your request in this browser tab.</p>
+        <p>Requests are saved on the GenMed server. Status updates appear here after the Doctor account reviews them.</p>
         {requests.length ? (
           <div className="review-grid">
             {requests.map(request => (
@@ -86,7 +89,7 @@ export default function PatientDashboard() {
           </article>
           <article className="dashboard-panel">
             <h3>View and Track Medicine Requests</h3>
-            <p>Module 2 coming soon. Tracking will be added by your teammate.</p>
+            <p>Search your requests by reference and follow their status.</p>
             <Link className="button secondary" to="/track">Track Requests</Link>
           </article>
         </div>

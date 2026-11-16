@@ -1,21 +1,37 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { CATEGORIES, addOwnRequest, listOwnRequests } from '../services/requestStore';
+import { CATEGORIES } from '../services/requestStore';
+import { validateRequest } from '../services/requestValidation';
 import SecureFileSelection from '../components/SecureFileSelection';
 import '../styles/request.css';
 
 const emptyFields = { medicine: '', category: '', quantity: '', notes: '' };
 
 export default function RequestMedicine() {
-  const { user } = useAuth();
+  const { user, api } = useAuth();
   const [fields, setFields] = useState({ ...emptyFields });
   const [feedback, setFeedback] = useState(null);
   // Remounts the file selection after a successful request so no file stays selected.
   const [fileKey, setFileKey] = useState(0);
-  const result = listOwnRequests(user);
+  // Activity 6: requests come from GET /api/requests (stored in SQLite), not from browser memory.
+  const [result, setResult] = useState({ ok: true, loading: true, requests: [] });
+  const [submitting, setSubmitting] = useState(false);
   const requests = result.ok ? result.requests : [];
   const errors = feedback?.errors || {};
+
+  // Changing reloadKey re-fetches the list (for example after a successful submit).
+  const [reloadKey, setReloadKey] = useState(0);
+  useEffect(() => {
+    const controller = new AbortController();
+    api('/requests', { signal: controller.signal }).then(response => {
+      if (response.aborted) return;
+      setResult(response.ok
+        ? { ok: true, loading: false, requests: response.data.requests }
+        : { ok: false, loading: false, requests: [], message: response.message });
+    });
+    return () => controller.abort();
+  }, [api, reloadKey]);
 
   function changeField(event) {
     const { name, value } = event.target;
@@ -23,17 +39,30 @@ export default function RequestMedicine() {
     setFeedback(null);
   }
 
-  function submit(event) {
+  async function submit(event) {
     event.preventDefault();
-    // SECURITY: Use the current AuthContext session, never a form-supplied name or owner.
-    const outcome = addOwnRequest(user, fields);
-    setFeedback(outcome);
-    if (outcome.ok) {
+    if (submitting) return;
+    const form = event.currentTarget;
+    const focusFirst = fieldErrors => form.elements.namedItem(Object.keys(fieldErrors)[0])?.focus();
+    // Activity 5 Task 1: validate in the browser first for quick feedback...
+    const validation = validateRequest(fields, CATEGORIES);
+    if (!validation.ok) {
+      setFeedback({ ok: false, message: 'Please check the highlighted fields', errors: validation.errors });
+      focusFirst(validation.errors);
+      return;
+    }
+    // ...then Activity 6: POST /api/requests. The server validates again and sets the owner,
+    // patient name, date and status from the JWT, never from the form.
+    setSubmitting(true);
+    const response = await api('/requests', { method: 'POST', body: validation.values });
+    setSubmitting(false);
+    setFeedback({ ok: response.ok, message: response.message, errors: response.data?.errors });
+    if (response.ok) {
       setFields({ ...emptyFields });
       setFileKey(previous => previous + 1);
-    } else if (outcome.errors) {
-      const firstField = Object.keys(outcome.errors)[0];
-      event.currentTarget.elements.namedItem(firstField)?.focus();
+      setReloadKey(previous => previous + 1);
+    } else if (response.data?.errors) {
+      focusFirst(response.data.errors);
     }
   }
 
@@ -50,7 +79,7 @@ export default function RequestMedicine() {
         <Link className="button secondary" to="/patient">My dashboard</Link>
         <Link className="button secondary" to="/track">Track Requests</Link>
       </div>
-      <p className="sample-note">Demo only: no order is placed and no medicine is prescribed. Use fictional notes only.</p>
+      <p className="sample-note">Classroom demo: requests are saved in the GenMed database, but no order is placed and no medicine is prescribed. Use fictional notes only.</p>
       <div role="status" aria-live="polite" aria-atomic="true">
         {feedback && (
           <p className={feedback.ok ? 'request-success' : 'field-error'}>{feedback.message}</p>
@@ -94,13 +123,14 @@ export default function RequestMedicine() {
           <span id="notes-error" className="field-error">{errors.notes}</span>
         </div>
         <SecureFileSelection key={fileKey} />
-        <button className="button" type="submit">Submit Request</button>
+        <button className="button" type="submit" disabled={submitting}>{submitting ? 'Submitting…' : 'Submit Request'}</button>
       </form>
       <section className="request-section" aria-labelledby="own-requests-heading">
         <h2 id="own-requests-heading">My Requests</h2>
-        <p className="fine-print">Newest first · {requests.length}/20 requests, including samples. Data resets on refresh.</p>
-        {!result.ok && <p role="alert">{result.message}</p>}
-        {result.ok && requests.length === 0 && <p>No requests yet.</p>}
+        <p className="fine-print">Newest first · {requests.length}/20 requests · Saved on the GenMed server.</p>
+        {result.loading && <p role="status">Loading your requests…</p>}
+        {!result.ok && <p role="alert" className="field-error">{result.message}</p>}
+        {result.ok && !result.loading && requests.length === 0 && <p>No requests yet.</p>}
         <ul className="request-list">
           {requests.map(request => (
             <li className="dashboard-panel" key={request.id}>

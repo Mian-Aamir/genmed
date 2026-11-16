@@ -1,5 +1,5 @@
-import { createContext, Fragment, useContext, useEffect, useState } from 'react';
-import { createDemoService } from '../services/demoService';
+import { createContext, Fragment, useCallback, useContext, useEffect, useRef, useState } from 'react';
+import { apiRequest } from '../services/api';
 
 const AuthContext = createContext(null);
 
@@ -21,53 +21,80 @@ function clearSensitiveBrowserStorage() {
   } catch { /* storage unavailable: nothing to clear */ }
 }
 
+const emptySession = { user: null, requests: [] };
+
 export function AuthProvider({ children }) {
-  // SECURITY: Demo only, real authentication (JWT + hashing) will be built in the backend.
-  // All submitted values and session state stay in memory; no cookies/storage or sensitive logs.
-  const [service] = useState(() => {
-    clearSensitiveBrowserStorage();
-    return createDemoService();
-  });
-  const [session, setSession] = useState(() => service.snapshot());
+  // Activity 6: authentication is done by the backend (bcrypt + signed JWT).
+  // SECURITY: The JWT lives only in React memory (this ref). It is not stored in localStorage,
+  // sessionStorage or cookies, so a page refresh logs the user out.
+  const token = useRef(null);
+  const [session, setSession] = useState(emptySession);
+  const [lockedUntil, setLockedUntil] = useState(0);
   const [remaining, setRemaining] = useState(0);
   // Activity 5 Task 4: changing this key remounts the whole UI below the provider.
   const [uiSession, setUiSession] = useState(0);
-  useEffect(() => {
-    const timer = window.setInterval(() => setRemaining(service.remainingSeconds()), 250);
-    return () => window.clearInterval(timer);
-  }, [service]);
 
-  function refresh() {
-    setSession(service.snapshot());
-    setRemaining(service.remainingSeconds());
-  }
-  function login(email, password) {
-    const result = service.login(email, password);
-    refresh();
-    return result;
-  }
-  function logout() {
-    service.logout();
+  useEffect(() => { clearSensitiveBrowserStorage(); }, []);
+  useEffect(() => {
+    const tick = () => setRemaining(Math.max(0, Math.ceil((lockedUntil - Date.now()) / 1000)));
+    tick();
+    const timer = window.setInterval(tick, 250);
+    return () => window.clearInterval(timer);
+  }, [lockedUntil]);
+
+  const endSession = useCallback(() => {
+    token.current = null;
     // SECURITY: Remove sensitive browser storage and discard ALL temporary UI state of the previous
     // user (form drafts, notes, search filters, open details, selected files, password feedback).
-    // Remounting resets every component's state. The cooldown in the service is kept on purpose.
     clearSensitiveBrowserStorage();
+    setSession(emptySession);
     setUiSession(previous => previous + 1);
-    refresh();
-  }
-  function recordFailure() { service.recordFailure(); refresh(); }
-  function requestReview(medicineId) {
-    const result = service.requestReview(medicineId);
-    refresh();
+  }, []);
+
+  /** Authenticated API call. A 401 means the token is missing, invalid or expired: log out. */
+  const api = useCallback(async (path, options = {}) => {
+    const result = await apiRequest(path, { ...options, token: token.current });
+    if (result.status === 401 && token.current) endSession();
     return result;
-  }
-  function decideReview(id, status, note) {
-    const result = service.decideReview(id, status, note);
-    refresh();
+  }, [endSession]);
+
+  // Module 1: the patient/doctor review queue shown on the dashboards.
+  const loadReviews = useCallback(async () => {
+    const result = await api('/reviews');
+    if (result.ok) setSession(previous => (previous.user ? { ...previous, requests: result.data.requests } : previous));
     return result;
+  }, [api]);
+
+  async function login(email, password) {
+    if (token.current) return { ok: false, message: 'Log out before switching accounts.' };
+    const result = await apiRequest('/auth/login', { method: 'POST', body: { email, password } });
+    if (result.status === 429) setLockedUntil(Date.now() + (result.retryAfter || 30) * 1000);
+    if (!result.ok) return { ok: false, message: result.message || 'Invalid email or password.' };
+    token.current = result.data.token;
+    setSession({ user: result.data.user, requests: [] });
+    loadReviews();
+    return { ok: true };
   }
-  return <AuthContext.Provider value={{ ...session, login, logout, remaining, recordFailure,
-    isLocked: () => service.remainingSeconds() > 0, requestReview, decideReview }}>
+
+  function logout() {
+    // Stateless JWT: discarding it on the client ends the session. It also expires after 1 hour.
+    endSession();
+  }
+
+  async function requestReview(medicineId) {
+    const result = await api('/reviews', { method: 'POST', body: { medicineId } });
+    if (result.ok) await loadReviews();
+    return { ok: result.ok, message: result.message };
+  }
+
+  async function decideReview(id, decision, note) {
+    const result = await api(`/reviews/${encodeURIComponent(id)}`, { method: 'PATCH', body: { decision, note } });
+    if (result.ok) await loadReviews();
+    return { ok: result.ok, message: result.message, errors: result.data?.errors };
+  }
+
+  return <AuthContext.Provider value={{ ...session, login, logout, remaining, isLocked: () => remaining > 0,
+    api, loadReviews, requestReview, decideReview }}>
     <Fragment key={uiSession}>{children}</Fragment>
   </AuthContext.Provider>;
 }

@@ -6,8 +6,6 @@ import { readFileSync, readdirSync, statSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import vm from 'node:vm';
-import { demoUsers } from '../src/data/demoUsers.js';
-import { createDemoService } from '../src/services/demoService.js';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const read = file => readFileSync(path.join(root, file), 'utf8');
@@ -92,24 +90,27 @@ test('T4 no API keys, tokens or private keys are bundled in the frontend', () =>
   }
 });
 
-test('T4 the session holds only id, name and role, and logout removes it', () => {
-  const account = demoUsers.find(user => user.role === 'patient');
-  const service = createDemoService();
-  assert.equal(service.login(account.email, account.password).ok, true);
-  const snapshot = service.snapshot();
-  assert.deepEqual(Object.keys(snapshot.user).sort(), ['id', 'name', 'role']);
-  assert.equal(JSON.stringify(snapshot).includes(account.password), false);
-  service.logout();
-  assert.deepEqual(service.snapshot(), { user: null, requests: [] });
+test('T4/A6 no passwords are bundled; the JWT is kept only in memory and cleared on logout', () => {
+  for (const file of sourceFiles(path.join(root, 'src'))) {
+    assert.doesNotMatch(readFileSync(file, 'utf8'), /password:\s*['"]|Demo1!/, path.relative(root, file));
+  }
+  const context = read('src/context/AuthContext.jsx');
+  assert.match(context, /const token = useRef\(null\)/);
+  assert.match(context, /token\.current = result\.data\.token/);
+  const endSession = context.slice(context.indexOf('const endSession'), context.indexOf('const api = useCallback'));
+  assert.match(endSession, /token\.current = null/);
+  assert.match(endSession, /setSession\(emptySession\)/);
 });
 
 test('T4 logout clears browser storage and remounts the UI', () => {
   const context = read('src/context/AuthContext.jsx');
   assert.match(context, /sessionStorage\.clear\(\)/);
   assert.match(context, /<Fragment key=\{uiSession\}>/);
-  const logout = context.slice(context.indexOf('function logout()'), context.indexOf('function recordFailure'));
-  assert.match(logout, /clearSensitiveBrowserStorage\(\)/);
-  assert.match(logout, /setUiSession/);
+  const logout = context.slice(context.indexOf('function logout()'), context.indexOf('async function requestReview'));
+  assert.match(logout, /endSession\(\)/);
+  const endSession = context.slice(context.indexOf('const endSession'), context.indexOf('const api = useCallback'));
+  assert.match(endSession, /clearSensitiveBrowserStorage\(\)/);
+  assert.match(endSession, /setUiSession/);
 });
 
 test('T4 Login clears the password field and its feedback after every submit', () => {

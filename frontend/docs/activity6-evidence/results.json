@@ -1,0 +1,102 @@
+{
+  "browser": "Microsoft Edge 157.0.4341.60 (headless)",
+  "frontend": "http://localhost:5173",
+  "backend": "http://localhost:4000 (via Vite proxy)",
+  "date": "2026-11-16T08:07:11.616Z",
+  "alerts": [],
+  "consoleErrors": [
+    "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+  ],
+  "results": [
+    {
+      "id": "A6-01",
+      "feature": "Backend login",
+      "action": "patient@example.com + wrong password",
+      "expected": "401 and generic error",
+      "actual": "HTTP 401, generic message shown",
+      "pass": true,
+      "screenshot": "A6-01_login_wrong_password.png"
+    },
+    {
+      "id": "A6-02",
+      "feature": "Login + JWT generation",
+      "action": "patient@example.com + correct password",
+      "expected": "200, signed JWT, patient dashboard, nothing in browser storage",
+      "actual": "HTTP 200, JWT alg HS256 with sub=1, role=patient; storage empty=true",
+      "pass": true,
+      "screenshot": "A6-02_patient_dashboard_after_login.png"
+    },
+    {
+      "id": "A6-03",
+      "feature": "Module 2 validation",
+      "action": "Submit empty form",
+      "expected": "Field errors, nothing sent",
+      "actual": "Inline errors shown",
+      "pass": true,
+      "screenshot": "A6-03_request_empty_rejected.png"
+    },
+    {
+      "id": "A6-04",
+      "feature": "Module 2 submit (frontend -> backend -> DB)",
+      "action": "Brufen 400mg, qty 3, notes <img src=x onerror=alert(1)>",
+      "expected": "201, new GM reference, note displayed as text, no alert",
+      "actual": "HTTP 201, GM-1005, literal note shown, dialogs=0",
+      "pass": true,
+      "screenshot": "A6-04_request_submitted_xss_literal.png"
+    },
+    {
+      "id": "A6-05",
+      "feature": "Module 2 retrieval",
+      "action": "View Details for GM-1005",
+      "expected": "Details loaded from backend",
+      "actual": "Details shown",
+      "pass": true,
+      "screenshot": "A6-05_track_details_from_backend.png"
+    },
+    {
+      "id": "A6-06",
+      "feature": "Module 1 submit",
+      "action": "Request review of Brufen (id 4)",
+      "expected": "201 and listed under My review requests",
+      "actual": "HTTP 201",
+      "pass": true,
+      "screenshot": "A6-06_patient_review_requested.png"
+    },
+    {
+      "id": "A6-07",
+      "feature": "Role-based access (UI)",
+      "action": "Patient opens /doctor",
+      "expected": "Access Denied",
+      "actual": "Access Denied page",
+      "pass": true,
+      "screenshot": "A6-07_patient_opens_doctor_denied.png"
+    },
+    {
+      "id": "A6-08",
+      "feature": "Module 1 doctor decision (role: doctor)",
+      "action": "Mark reviewed with script text in note",
+      "expected": "200, note shown as text, no alert",
+      "actual": "HTTP 200, dialogs=0, storage after logout empty=true",
+      "pass": true,
+      "screenshot": "A6-08_doctor_review_saved.png"
+    },
+    {
+      "id": "A6-09",
+      "feature": "Token kept in memory only",
+      "action": "Reload /doctor while logged in",
+      "expected": "Redirected to login, must log in again",
+      "actual": "Now on /login",
+      "pass": true,
+      "screenshot": "A6-09_reload_requires_login.png"
+    },
+    {
+      "id": "A6-10",
+      "feature": "Data persisted in database",
+      "action": "Patient logs in again",
+      "expected": "Doctor decision visible",
+      "actual": "Status \"Reviewed (demo only)\" shown",
+      "pass": true,
+      "screenshot": "A6-10_patient_sees_reviewed_status.png"
+    }
+  ]
+}

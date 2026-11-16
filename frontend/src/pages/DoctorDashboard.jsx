@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import ReviewSummary from '../components/ReviewSummary';
 import Icon from '../components/Icon';
@@ -9,7 +9,8 @@ function ReviewCard({ request }) {
   const [note, setNote] = useState('');
   const [result, setResult] = useState(null);
   const [errors, setErrors] = useState({});
-  function submit(event) {
+  const [saving, setSaving] = useState(false);
+  async function submit(event) {
     event.preventDefault();
     const form = event.currentTarget;
     const status = String(new FormData(form).get('decision') || '');
@@ -21,8 +22,12 @@ function ReviewCard({ request }) {
       form.elements.namedItem(validation.errors.decision ? 'decision' : 'note')?.focus();
       return;
     }
-    const outcome = decideReview(request.id, status, note);
+    // Activity 6: PATCH /api/reviews/:id. The server checks the doctor role and validates again.
+    setSaving(true);
+    const outcome = await decideReview(request.id, status, note);
+    setSaving(false);
     setResult(outcome);
+    if (outcome.errors) setErrors(outcome.errors);
     if (outcome.ok) setNote('');
   }
   return <article className="dashboard-panel">
@@ -44,14 +49,16 @@ function ReviewCard({ request }) {
         <span id={`note-help-${request.id}`} className="field-hint">{note.length}/{REVIEW_NOTE_MAX} · Required, 1–300 characters. Use fictional information only. Visible to the Doctor role.</span>
         <span id={`note-error-${request.id}`} className="field-error">{errors.note}</span>
       </div>
-      <button type="submit" className="button">Save demo review</button>
+      <button type="submit" className="button" disabled={saving}>{saving ? 'Saving…' : 'Save demo review'}</button>
     </form>}
     <p role="status" className={result?.ok ? 'success-message' : 'field-error'}>{result?.message}</p>
   </article>;
 }
 
 export default function DoctorDashboard() {
-  const { user, requests } = useAuth();
+  const { user, requests, loadReviews } = useAuth();
+  // Activity 6: always show the latest queue from GET /api/reviews when the page opens.
+  useEffect(() => { loadReviews(); }, [loadReviews]);
   const [filter, setFilter] = useState('all');
   const visible = requests.filter(request => filter === 'all' || request.status === filter);
   const pending = requests.filter(request => request.status === 'pending').length;

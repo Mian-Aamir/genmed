@@ -1,22 +1,18 @@
-import test, { beforeEach } from 'node:test';
+// Client-side validation for the Submit Medicine Request and Doctor Review forms.
+// Activity 6: saving, ownership and references are tested against the real API in
+// backend/tests/requests.test.mjs. The last test checks the server applies the same rules.
+import test from 'node:test';
 import assert from 'node:assert/strict';
-import { demoUsers } from '../src/data/demoUsers.js';
 import { MEDICINE_NAME_PATTERN, validateRequest, validateReview } from '../src/services/requestValidation.js';
-import { CATEGORIES, addOwnRequest, listOwnRequests, resetRequestStore } from '../src/services/requestStore.js';
+import { CATEGORIES } from '../src/services/requestStore.js';
+import { validateMedicineRequest, validateReviewDecision } from '../../backend/src/validation.js';
 
-const account = demoUsers.find(user => user.role === 'patient');
-const patient = { id: account.id, name: account.name, role: account.role };
 const valid = { medicine: 'Paracetamol 500mg', category: 'Painkiller', quantity: '2', notes: '' };
 
-beforeEach(() => resetRequestStore());
-
-test('valid submit normalizes text and stores a numeric quantity', () => {
-  const result = addOwnRequest(patient, { ...valid, medicine: '  Paracetamol 500mg  ', category: ' Painkiller ', quantity: ' 2 ', notes: ' Demo note ' });
+test('valid submit normalizes text and produces a numeric quantity', () => {
+  const result = validateRequest({ ...valid, medicine: '  Paracetamol 500mg  ', category: ' Painkiller ', quantity: ' 2 ', notes: ' Demo note ' }, CATEGORIES);
   assert.equal(result.ok, true);
-  assert.equal(result.message, 'Request GM-1004 submitted successfully');
-  assert.equal(result.request.medicine, 'Paracetamol 500mg');
-  assert.equal(result.request.quantity, 2);
-  assert.equal(result.request.notes, 'Demo note');
+  assert.deepEqual(result.values, { medicine: 'Paracetamol 500mg', category: 'Painkiller', quantity: 2, notes: 'Demo note' });
 });
 
 for (const [label, changes, field] of [
@@ -39,14 +35,12 @@ for (const [label, changes, field] of [
   ['oversized notes', { notes: 'x'.repeat(201) }, 'notes'],
   ['spaces-only notes', { notes: '   ' }, 'notes'],
 ]) {
-  test(`rejects ${label} without adding a record or consuming a reference`, () => {
+  test(`rejects ${label} in the browser and on the server`, () => {
     const input = { ...valid, ...changes };
-    assert.equal(validateRequest(input, CATEGORIES).ok, false);
-    const outcome = addOwnRequest(patient, input);
+    const outcome = validateRequest(input, CATEGORIES);
     assert.equal(outcome.ok, false);
     assert.ok(outcome.errors[field]);
-    assert.equal(listOwnRequests(patient).requests.length, 3);
-    assert.equal(addOwnRequest(patient, valid).request.id, 'GM-1004');
+    assert.ok(validateMedicineRequest(input).errors[field], 'server rejects it too');
   });
 }
 
@@ -60,9 +54,9 @@ test('optional notes and boundary values are accepted', () => {
 
 test('script-like notes remain plain text; the UI must render them using React escaping', () => {
   const notes = '<script>alert("demo")</script>';
-  const result = addOwnRequest(patient, { ...valid, notes });
+  const result = validateRequest({ ...valid, notes }, CATEGORIES);
   assert.equal(result.ok, true);
-  assert.equal(result.request.notes, notes);
+  assert.equal(result.values.notes, notes);
 });
 
 // ---------------- Activity 5 Task 1 (Ammar Ahmad) ----------------
@@ -75,13 +69,12 @@ test('A5 medicine name accepts real formats and is trimmed', () => {
   assert.ok(MEDICINE_NAME_PATTERN.test('Paracetamol 500mg'));
 });
 
-test('A5 medicine name rejects markup and unexpected characters without saving', () => {
+test('A5 medicine name rejects markup and unexpected characters', () => {
   for (const medicine of ['<script>alert("xss")</script>', 'Panadol<b>', 'Brufen"onmouseover', '{{7*7}}', '-Panadol']) {
-    const outcome = addOwnRequest(patient, { ...valid, medicine });
+    const outcome = validateRequest({ ...valid, medicine }, CATEGORIES);
     assert.equal(outcome.ok, false, medicine);
     assert.match(outcome.errors.medicine, /letters, numbers/);
   }
-  assert.equal(listOwnRequests(patient).requests.length, 3);
 });
 
 test('A5 doctor review requires an allowlisted decision and a 1-300 character trimmed note', () => {
@@ -94,4 +87,22 @@ test('A5 doctor review requires an allowlisted decision and a 1-300 character tr
   assert.equal(validateReview('discussion', 'x').ok, true);
   assert.equal(validateReview('reviewed', 'x'.repeat(300)).ok, true);
   assert.equal(validateReview('discussion', '  Check dosage.  ').values.note, 'Check dosage.');
+});
+
+test('A6 the backend applies exactly the same request and review rules as the forms', () => {
+  const samples = [
+    valid, {}, null, { ...valid, quantity: '20' }, { ...valid, quantity: '21' }, { ...valid, quantity: 1.5 },
+    { ...valid, medicine: '  Co-Amoxiclav (625) ' }, { ...valid, medicine: 'Panadol<b>' }, { ...valid, category: 'Other' },
+    { ...valid, category: 'Poison' }, { ...valid, notes: 'x'.repeat(200) }, { ...valid, notes: 'x'.repeat(201) }, { ...valid, notes: '  ' },
+  ];
+  for (const sample of samples) {
+    const client = validateRequest(sample, CATEGORIES);
+    const server = validateMedicineRequest(sample);
+    assert.equal(server.ok, client.ok, JSON.stringify(sample));
+    assert.deepEqual(Object.keys(server.errors).sort(), Object.keys(client.errors).sort(), JSON.stringify(sample));
+    if (client.ok) assert.deepEqual(server.values, client.values);
+  }
+  for (const [decision, note] of [['reviewed', 'ok'], ['approve-all', 'ok'], ['discussion', '   '], ['reviewed', 'x'.repeat(301)]]) {
+    assert.equal(validateReviewDecision({ decision, note }).ok, validateReview(decision, note).ok, `${decision}/${note.length}`);
+  }
 });
