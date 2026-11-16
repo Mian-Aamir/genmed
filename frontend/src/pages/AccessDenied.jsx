@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { dashboardPath } from '../data/demoUsers';
+import { dashboardPath } from '../data/roles';
 import Icon from '../components/Icon';
 
 export default function AccessDenied() {

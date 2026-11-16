@@ -18,8 +18,8 @@ Requires Node.js 22.13 or later (tested on 26.13.1). There is no separate databa
 # Terminal 1: backend on http://localhost:4000
 cd backend
 npm install
-cp .env.example .env        # then set JWT_SECRET to a long random value (see the comment in the file)
-npm run db:reset            # creates data/genmed.db from database/schema.sql and seeds demo data
+cp .env.example .env        # then set JWT_SECRET and the DOCTOR_* values (see the comments in the file)
+npm run db:reset            # creates an empty data/genmed.db from database/schema.sql
 npm start
 
 # Terminal 2: frontend on http://localhost:5173 (Vite proxies /api to the backend)
@@ -31,17 +31,21 @@ npm run dev
 If `JWT_SECRET` is missing, the server generates a random one for that run and prints a
 warning. Logins then stop working after a restart.
 
-`npm test` runs 28 API tests against an in-memory database.
+`npm test` runs 37 API tests against an in-memory database.
 
-## Seeded classroom accounts
+## Accounts
 
-These accounts are fictional. Only their bcrypt hashes (cost 12) are stored in the database.
+A new database contains **no accounts and no sample records**, only the medicine catalogue.
 
-| Role | Email | Password |
-| --- | --- | --- |
-| Patient | patient@example.com | PatientDemo1! |
-| Patient (second, for ownership tests) | other.patient@example.com | OtherPatient1! |
-| Doctor | doctor@example.com | DoctorDemo1! |
+- **Patients register themselves** on the website: open `/register`, or click **Register** in the navigation bar or **Create an account** on the login page. Registration creates the account and logs the user in straight away.
+- **The doctor account is created by the administrator.** Public sign-up can never create a doctor, because otherwise anyone could give themselves doctor permissions. When the server starts, it creates the doctor from `DOCTOR_NAME`, `DOCTOR_EMAIL` and `DOCTOR_PASSWORD` in `.env` if that email does not exist yet. If these are not set, the server prints a warning.
+
+Passwords must be 8–128 characters with an uppercase letter, a lowercase letter and a number,
+and must not contain the email name. The same rules are checked in the browser and on the
+server. Only bcrypt hashes (cost 12) are stored.
+
+The automated tests use their own in-memory database with fictional accounts (`TEST_ACCOUNTS`
+in `src/db.js`). Those accounts never appear in the real database.
 
 ## Database
 
@@ -64,6 +68,7 @@ All responses are JSON: `{ ok: true, ... }` on success and `{ ok: false, message
 | --- | --- | --- | --- | --- |
 | GET | `/api/health` | none | shared | Server and database status |
 | GET | `/api/medicines` | none | shared | Sample medicine catalogue |
+| POST | `/api/auth/register` | none | 1 | `{ name, email, password }` → 201 `{ token, user }`. Always creates a **patient** and ignores any `role` field. 400 with field errors, 409 if the email is taken, 429 after 10 sign-ups per device in 10 minutes |
 | POST | `/api/auth/login` | none | 1 | `{ email, password }` → `{ token, user: { id, name, role } }`. 401 on bad credentials, 429 after 5 failures (30 s lock) |
 | GET | `/api/auth/me` | any role | 1 | The user behind the token |
 | GET | `/api/reviews` | patient, doctor | 1 | A patient gets only their own requests, with no internal notes. A doctor gets all requests with masked email and notes |
@@ -83,6 +88,7 @@ attempts, `500` generic server error.
 - **Password hashing:** bcrypt with cost 12. Plaintext passwords are never stored or logged. Unknown emails are compared against a dummy hash so they take about as long as wrong passwords, and both get the same generic 401.
 - **JWT:** signed with HS256. The token holds only `sub` (user id) and `role`, and sets `iss`, `aud` and a 1 hour `exp`. Verification pins the algorithm (`alg: none` and algorithm-swapping tokens are refused) and checks the issuer, audience and expiry. Missing, malformed, modified, re-signed and expired tokens all get 401. After verification the user is re-loaded from the database, so authorization uses the current role.
 - **Secret handling:** `JWT_SECRET` comes from `.env`, which git ignores. There is no hardcoded fallback, and the placeholder value from `.env.example` is rejected.
+- **Registration:** the role is fixed to `patient` on the server, so privilege escalation through sign-up is impossible. The name, email and password policy are validated on the server, emails are unique regardless of letter case, and sign-ups are rate limited per client address.
 - **Role-based authorization:** `requireRole()` protects every mutation. Patients cannot record review decisions or change request status, and doctors cannot submit patient requests.
 - **Ownership:** patient queries are always scoped by the user id from the token, never by an id in the request body or URL. Fields such as `ownerId`, `status`, `date` and `patientName` sent in the body are ignored.
 - **Server-side validation:** `src/validation.js` trims input, applies length limits, allowlists categories, statuses and decisions, accepts quantity only as a whole number from 1 to 20, and applies a character pattern to medicine names. A test checks that these rules match the frontend's Activity 5 rules.
@@ -94,5 +100,7 @@ attempts, `500` generic server error.
 ### Known limitations (classroom scope)
 
 - JWTs are stateless. Logout discards the token in the browser, but a copied token stays valid until it expires (1 hour). A production system would add a server-side denylist or short-lived tokens with refresh tokens.
-- Login throttling is kept in memory and resets when the server restarts.
+- Login and registration throttling are kept in memory and reset when the server restarts.
+- Registration tells the user when an email is already registered. This is friendlier, but it lets someone check whether an email has an account. A production system would send a confirmation email instead.
+- There is no email verification or password reset yet.
 - The selected supporting document (Activity 5 Task 3) is still validated only in the browser and is not uploaded.

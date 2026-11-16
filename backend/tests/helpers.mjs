@@ -1,14 +1,19 @@
-import { openDatabase } from '../src/db.js';
+import { openDatabase, TEST_ACCOUNTS } from '../src/db.js';
 import { createApp } from '../src/app.js';
 
-export const PATIENT = { email: 'patient@example.com', password: 'PatientDemo1!' };
-export const OTHER_PATIENT = { email: 'other.patient@example.com', password: 'OtherPatient1!' };
-export const DOCTOR = { email: 'doctor@example.com', password: 'DoctorDemo1!' };
+const credentials = ({ email, password }) => ({ email, password });
+export const PATIENT = credentials(TEST_ACCOUNTS.patient);
+export const OTHER_PATIENT = credentials(TEST_ACCOUNTS.otherPatient);
+export const DOCTOR = credentials(TEST_ACCOUNTS.doctor);
+export const PATIENT_NAME = TEST_ACCOUNTS.patient.name;
 
-/** Starts the real Express app on a random port with a fresh in-memory SQLite database. */
-export async function startServer(options = {}) {
-  const db = openDatabase(':memory:', { bcryptRounds: 4 });
-  const app = createApp(db, options);
+/**
+ * Starts the real Express app on a random port with a fresh in-memory SQLite database.
+ * sampleData: false gives an empty database, like a fresh install.
+ */
+export async function startServer({ sampleData = true, env = {}, ...options } = {}) {
+  const db = openDatabase(':memory:', { bcryptRounds: 4, sampleData, env });
+  const app = createApp(db, { bcryptRounds: 4, ...options });
   const server = await new Promise(resolve => {
     const s = app.listen(0, '127.0.0.1', () => resolve(s));
   });

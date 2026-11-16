@@ -1,8 +1,8 @@
 {
-  "status": 200,
+  "status": 201,
   "user": {
-    "id": 1,
-    "name": "Ali Demo",
+    "id": 2,
+    "name": "Hamza Tariq",
     "role": "patient"
   },
   "tokenHeader": {
@@ -11,13 +11,13 @@
   },
   "tokenPayload": {
     "role": "patient",
-    "iat": 1794816426,
-    "exp": 1794820026,
+    "iat": 1794817121,
+    "exp": 1794820721,
     "aud": "genmed-web",
     "iss": "genmed-api",
-    "sub": "1"
+    "sub": "2"
   },
-  "browserStorageAfterLogin": {
+  "browserStorageAfterRegister": {
     "local": [],
     "session": [],
     "cookie": ""

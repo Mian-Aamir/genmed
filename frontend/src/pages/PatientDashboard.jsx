@@ -25,7 +25,7 @@ export default function PatientDashboard() {
     <section className="container dashboard-page">
       <span className="eyebrow">PATIENT WORKSPACE</span>
       <h1>Welcome, {user.name}</h1>
-      <p className="dashboard-intro">Explore options, request a demo review, and follow your requests in one place.</p>
+      <p className="dashboard-intro">Explore options, request a medicine review, and follow your requests in one place.</p>
       <div className="dashboard-actions">
         <Link className="button" to="/search">
           <Icon name="search" size={18} />
@@ -37,10 +37,10 @@ export default function PatientDashboard() {
       <div className="dashboard-grid">
         <section className="dashboard-panel" id="new-request" aria-labelledby="request-title">
           <h2 id="request-title">Request a medicine review</h2>
-          <p>Choose a sample medicine for the classroom review workflow. No prescription or personal medical history is needed.</p>
+          <p>Choose a medicine and a doctor will review it. No prescription or personal medical history is needed.</p>
           <form onSubmit={submit}>
             <div className="field">
-              <label htmlFor="requested-medicine">Sample medicine</label>
+              <label htmlFor="requested-medicine">Medicine</label>
               <select id="requested-medicine" name="medicineId" defaultValue="" required>
                 <option value="" disabled>Choose a medicine</option>
                 {medicines.map(medicine => (
@@ -56,7 +56,7 @@ export default function PatientDashboard() {
           <Icon name="shield" size={32} />
           <h2>Your information, limited by role.</h2>
           <p>You can see only your own requests. Doctor contact views show masked email addresses, and internal review notes are omitted from your view.</p>
-          <p className="fine-print">All records are fictional. Access rules are enforced by the GenMed server; this is still a classroom system, not a confidential medical record.</p>
+          <p className="fine-print">Access rules are enforced by the GenMed server, not just by this page.</p>
         </aside>
       </div>
       <section id="my-requests" className="request-section" aria-labelledby="my-requests-title">
@@ -69,14 +69,14 @@ export default function PatientDashboard() {
                 <ReviewSummary request={request} />
                 <p className="fine-print">
                   {request.status === 'pending'
-                    ? 'Awaiting a demo review.'
-                    : 'Demo workflow completed. Consult a real doctor or pharmacist before making any treatment change.'}
+                    ? 'Awaiting review by a doctor.'
+                    : 'Review completed. Consult your doctor or pharmacist before making any treatment change.'}
                 </p>
               </article>
             ))}
           </div>
         ) : (
-          <p className="empty-state">No requests yet. Choose a sample medicine to get started.</p>
+          <p className="empty-state">No requests yet. Choose a medicine to get started.</p>
         )}
       </section>
       <section className="request-section" aria-labelledby="medicine-request-modules">
@@ -84,7 +84,7 @@ export default function PatientDashboard() {
         <div className="dashboard-grid">
           <article className="dashboard-panel">
             <h3>Submit Medicine Request</h3>
-            <p>Submit a demo medicine request and see its reference in My Requests.</p>
+            <p>Submit a medicine request and see its reference in My Requests.</p>
             <Link className="button" to="/request">Submit Request</Link>
           </article>
           <article className="dashboard-panel">
@@ -96,7 +96,7 @@ export default function PatientDashboard() {
       </section>
       <aside className="safety-note">
         <Icon name="shield" />
-        <p>Always confirm with your doctor or pharmacist before switching medicines. Prices are approximate. Demo review decisions are not medical advice or approval.</p>
+        <p>Always confirm with your doctor or pharmacist before switching medicines. Prices are approximate. Review decisions are not a prescription or medical approval.</p>
       </aside>
     </section>
   );

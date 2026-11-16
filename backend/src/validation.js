@@ -24,6 +24,38 @@ export function validateLogin(body) {
   return result(errors, { email, password });
 }
 
+// Registration. Names allow letters from any language plus space . ' -
+export const NAME_PATTERN = /^\p{L}[\p{L} .'-]*$/u;
+export const PASSWORD_RULES = 'Use 8-128 characters with at least one uppercase letter, one lowercase letter and one number.';
+
+export function checkPasswordPolicy(password, email = '') {
+  if (typeof password !== 'string' || password.length < 8 || password.length > 128
+    || !/[a-z]/.test(password) || !/[A-Z]/.test(password) || !/[0-9]/.test(password)) {
+    return PASSWORD_RULES;
+  }
+  if (email && password.toLowerCase().includes(email.split('@')[0].toLowerCase()) && email.split('@')[0].length >= 4) {
+    return 'Your password must not contain your email name.';
+  }
+  return '';
+}
+
+export function validateRegistration(body) {
+  const input = isObject(body) ? body : {};
+  // Collapse repeated inner spaces so "Ali   Khan" is stored as "Ali Khan".
+  const name = typeof input.name === 'string' ? input.name.trim().replace(/\s+/g, ' ') : '';
+  const email = typeof input.email === 'string' ? input.email.trim().toLowerCase() : '';
+  const password = typeof input.password === 'string' ? input.password : '';
+  const errors = {};
+  if (!name) errors.name = 'Full name is required.';
+  else if (name.length < 3 || name.length > 80) errors.name = 'Full name must be between 3 and 80 characters.';
+  else if (!NAME_PATTERN.test(name)) errors.name = "Use letters, spaces and . ' - only.";
+  if (!email || email.length > 254 || !EMAIL_PATTERN.test(email)) errors.email = 'Enter a valid email address.';
+  const passwordError = checkPasswordPolicy(password, email);
+  if (passwordError) errors.password = passwordError;
+  // SECURITY: There is deliberately no "role" field. Any role sent by the client is ignored.
+  return result(errors, { name, email, password });
+}
+
 // Module 2: Submit Medicine Request (same rules as frontend/src/services/requestValidation.js).
 export function validateMedicineRequest(body) {
   const input = isObject(body) ? body : {};

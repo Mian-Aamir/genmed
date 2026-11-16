@@ -30,7 +30,7 @@ export default function SecureFileSelection({ id = 'supporting-document' }) {
       return;
     }
     setSelected({ name: file.name, size: file.size });
-    setStatus({ ok: true, message: 'File selected for demo only; no upload occurs.' });
+    setStatus({ ok: true, message: 'File checked. Uploading documents is not available yet, so it will not be sent.' });
   }
 
   function remove() {
@@ -47,7 +47,7 @@ export default function SecureFileSelection({ id = 'supporting-document' }) {
       <input ref={input} id={id} type="file" accept={ACCEPT_ATTRIBUTE} onChange={choose}
         aria-invalid={status?.ok === false} aria-describedby={`${id}-hint ${id}-status`} />
       <span id={`${id}-hint`} className="field-hint">
-        PDF, JPG, JPEG or PNG, up to {formatBytes(MAX_FILE_BYTES)}. Demo only: no file is uploaded or stored.
+        PDF, JPG, JPEG or PNG, up to {formatBytes(MAX_FILE_BYTES)}. Checked in your browser; uploads are not enabled yet.
       </span>
       <div id={`${id}-status`} role="status" aria-live="polite">
         {checking && <p className="field-hint">Checking file…</p>}

@@ -74,12 +74,12 @@ export default function RequestMedicine() {
     <section className="container dashboard-page medicine-request-page">
       <span className="eyebrow">PATIENT WORKSPACE · MEDICINE REQUESTS</span>
       <h1>Submit Medicine Request</h1>
-      <p className="dashboard-intro">Request a medicine or generic alternative in this classroom prototype.</p>
+      <p className="dashboard-intro">Request a medicine or a generic alternative.</p>
       <div className="dashboard-actions">
         <Link className="button secondary" to="/patient">My dashboard</Link>
         <Link className="button secondary" to="/track">Track Requests</Link>
       </div>
-      <p className="sample-note">Classroom demo: requests are saved in the GenMed database, but no order is placed and no medicine is prescribed. Use fictional notes only.</p>
+      <p className="sample-note">Your requests are saved to your account. Submitting a request does not place an order or prescribe a medicine.</p>
       <div role="status" aria-live="polite" aria-atomic="true">
         {feedback && (
           <p className={feedback.ok ? 'request-success' : 'field-error'}>{feedback.message}</p>

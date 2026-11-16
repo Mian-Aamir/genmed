@@ -19,7 +19,7 @@ export default function Footer() {
         <p className="fine-print">
           © {new Date().getFullYear()} GenMed Pakistan
           <br />
-          Role-based prototype · Development Activity 2
+          Secure Software Development · Activity 6
         </p>
       </div>
     </footer>

@@ -61,10 +61,11 @@ test('T5 helper handles empty and non-string input safely', () => {
   assert.equal(check({ toString: () => 'Gen#Med!Pharmacy2026' }).level, 'Weak');
 });
 
-test('T5 Login calls the global on change and the result never contains the password', () => {
-  const login = read('src/pages/Login.jsx');
-  assert.match(login, /window\.checkPasswordStrength\(password\)/);
-  assert.match(login, /onChange=\{onPasswordChange\}/);
+test('T5 Register calls the global on change and the result never contains the password', () => {
+  const page = read('src/pages/Register.jsx');
+  assert.match(page, /window\.checkPasswordStrength\(password\)/);
+  assert.match(page, /onChange=\{onPasswordChange\}/);
+  assert.match(page, /<PasswordStrengthMeter id="password-strength"/);
   const result = loadHelper()('Gen#Med!Pharmacy2026');
   assert.equal(JSON.stringify(result).includes('Gen#Med!Pharmacy2026'), false);
 });
@@ -96,7 +97,7 @@ test('T4/A6 no passwords are bundled; the JWT is kept only in memory and cleared
   }
   const context = read('src/context/AuthContext.jsx');
   assert.match(context, /const token = useRef\(null\)/);
-  assert.match(context, /token\.current = result\.data\.token/);
+  assert.match(context, /token\.current = data\.token/);
   const endSession = context.slice(context.indexOf('const endSession'), context.indexOf('const api = useCallback'));
   assert.match(endSession, /token\.current = null/);
   assert.match(endSession, /setSession\(emptySession\)/);
@@ -113,9 +114,10 @@ test('T4 logout clears browser storage and remounts the UI', () => {
   assert.match(endSession, /setUiSession/);
 });
 
-test('T4 Login clears the password field and its feedback after every submit', () => {
+test('T4 Login and Register clear passwords and never keep them in React state', () => {
   const login = read('src/pages/Login.jsx');
   assert.match(login, /namedItem\('password'\)\.value = ''/);
-  assert.match(login, /setStrength\(null\)/);
-  assert.doesNotMatch(login, /useState\([^)]*password/i, 'no password in React state');
+  const page = read('src/pages/Register.jsx');
+  assert.match(page, /form\.reset\(\);\s*setStrength\(null\)/);
+  for (const code of [login, page]) assert.doesNotMatch(code, /useState\([^)]*password/i, 'no password in React state');
 });

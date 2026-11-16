@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import Icon from './Icon';
-import { dashboardPath } from '../data/demoUsers';
+import { dashboardPath } from '../data/roles';
 
 export default function Navbar() {
   const { user, logout } = useAuth();
@@ -70,10 +70,13 @@ export default function Navbar() {
               </button>
             </>
           ) : (
-            <NavLink className="button secondary small" to="/login" onClick={close}>
-              Login
-              <Icon name="arrow" size={17} />
-            </NavLink>
+            <>
+              <NavLink to="/register" onClick={close}>Register</NavLink>
+              <NavLink className="button secondary small" to="/login" onClick={close}>
+                Login
+                <Icon name="arrow" size={17} />
+              </NavLink>
+            </>
           )}
         </nav>
       </div>

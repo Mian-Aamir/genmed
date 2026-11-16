@@ -44,7 +44,7 @@ export function validateRequest(fields, categories) {
 }
 
 // Activity 5 Task 1 (form 2): Doctor Review. The same limits are enforced again by
-// decideReview in demoService.js, so skipping the form does not bypass them.
+// PATCH /api/reviews/:id on the server, so skipping the form does not bypass them.
 export const REVIEW_DECISIONS = Object.freeze(['reviewed', 'discussion']);
 export const REVIEW_NOTE_MAX = 300;
 

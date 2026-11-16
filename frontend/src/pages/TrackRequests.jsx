@@ -85,12 +85,12 @@ export default function TrackRequests() {
     <section className="container dashboard-page track-page">
       <span className="eyebrow">PATIENT WORKSPACE · MEDICINE REQUESTS</span>
       <h1>View and Track Medicine Requests</h1>
-      <p className="dashboard-intro">Find your request by reference and follow its demo status.</p>
+      <p className="dashboard-intro">Find your request by reference and follow its status.</p>
       <div className="dashboard-actions">
         <Link className="button" to="/request">Submit Request</Link>
         <Link className="button secondary" to="/patient">My dashboard</Link>
       </div>
-      <p className="sample-note">Fictional demo records saved on the GenMed server. Statuses do not confirm a real order or medical approval.</p>
+      <p className="sample-note">Only your own requests are shown. A status is not a medical approval.</p>
       {result.loading ? (
         <p role="status">Loading your requests…</p>
       ) : !result.ok ? (

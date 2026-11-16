@@ -19,7 +19,7 @@ test('passwords are stored as bcrypt hashes, never plaintext', () => {
   assert.ok(rows.length >= 3);
   for (const row of rows) {
     assert.match(row.password_hash, /^\$2[aby]\$\d{2}\$[./A-Za-z0-9]{53}$/);
-    assert.ok(!row.password_hash.includes('Demo'));
+    assert.ok(!row.password_hash.includes('Pass'));
   }
 });
 
@@ -34,7 +34,7 @@ test('successful login returns a signed HS256 JWT with only id and role', async 
   assert.equal(decoded.payload.role, 'patient');
   assert.equal(decoded.payload.sub, String(res.data.user.id));
   assert.ok(decoded.payload.exp > decoded.payload.iat);
-  assert.equal(JSON.stringify(decoded.payload).includes('PatientDemo1!'), false);
+  assert.equal(JSON.stringify(decoded.payload).includes(PATIENT.password), false);
   assert.equal(JSON.stringify(decoded.payload).includes('@'), false);
 });
 

@@ -65,14 +65,27 @@ export function AuthProvider({ children }) {
     return result;
   }, [api]);
 
+  function startSession(data) {
+    token.current = data.token;
+    setSession({ user: data.user, requests: [] });
+    loadReviews();
+  }
+
   async function login(email, password) {
     if (token.current) return { ok: false, message: 'Log out before switching accounts.' };
     const result = await apiRequest('/auth/login', { method: 'POST', body: { email, password } });
     if (result.status === 429) setLockedUntil(Date.now() + (result.retryAfter || 30) * 1000);
     if (!result.ok) return { ok: false, message: result.message || 'Invalid email or password.' };
-    token.current = result.data.token;
-    setSession({ user: result.data.user, requests: [] });
-    loadReviews();
+    startSession(result.data);
+    return { ok: true };
+  }
+
+  // POST /api/auth/register: creates a patient account and signs the new user in.
+  async function register(name, email, password) {
+    if (token.current) return { ok: false, message: 'Log out before creating another account.' };
+    const result = await apiRequest('/auth/register', { method: 'POST', body: { name, email, password } });
+    if (!result.ok) return { ok: false, message: result.message, errors: result.data?.errors };
+    startSession(result.data);
     return { ok: true };
   }
 
@@ -93,7 +106,7 @@ export function AuthProvider({ children }) {
     return { ok: result.ok, message: result.message, errors: result.data?.errors };
   }
 
-  return <AuthContext.Provider value={{ ...session, login, logout, remaining, isLocked: () => remaining > 0,
+  return <AuthContext.Provider value={{ ...session, login, register, logout, remaining, isLocked: () => remaining > 0,
     api, loadReviews, requestReview, decideReview }}>
     <Fragment key={uiSession}>{children}</Fragment>
   </AuthContext.Provider>;

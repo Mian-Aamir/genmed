@@ -6,6 +6,7 @@ import Footer from './components/Footer';
 import ProtectedRoute from './components/ProtectedRoute';
 import Home from './pages/Home';
 import Login from './pages/Login';
+import Register from './pages/Register';
 import Search from './pages/Search';
 import NotFound from './pages/NotFound';
 import Dashboard from './pages/Dashboard';
@@ -22,6 +23,7 @@ export default function App() {
     const titles = {
       '/': 'Medicine choices, made clearer',
       '/login': 'Your account',
+      '/register': 'Create your account',
       '/search': 'Find medicine alternatives',
       '/dashboard': 'Your dashboard',
       '/patient': 'Patient dashboard',
@@ -42,6 +44,7 @@ export default function App() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
           <Route path="/dashboard" element={
             <ProtectedRoute>
               <Dashboard />

@@ -1,7 +1,7 @@
 // Module 2 (Ammar Ahmad): submit, view and track medicine requests.
 import test, { after, before } from 'node:test';
 import assert from 'node:assert/strict';
-import { DOCTOR, OTHER_PATIENT, PATIENT, startServer } from './helpers.mjs';
+import { DOCTOR, OTHER_PATIENT, PATIENT, PATIENT_NAME, startServer } from './helpers.mjs';
 
 let api; let patient; let other; let doctor;
 before(async () => {
@@ -21,7 +21,7 @@ test('patient lists only own requests, newest first', async () => {
   const res = await api.call('GET', '/api/requests', { token: patient });
   assert.equal(res.status, 200);
   assert.deepEqual(res.data.requests.map(r => r.id), ['GM-1003', 'GM-1002', 'GM-1001']);
-  assert.ok(res.data.requests.every(r => r.patientName === 'Ali Demo'));
+  assert.ok(res.data.requests.every(r => r.patientName === PATIENT_NAME));
 });
 
 test('patient submits a request: trimmed, stored in SQLite, server sets owner/date/status', async () => {
@@ -36,7 +36,7 @@ test('patient submits a request: trimmed, stored in SQLite, server sets owner/da
   assert.equal(request.notes, 'for hay fever');
   assert.equal(request.quantity, 2);
   assert.equal(request.status, 'Pending');
-  assert.equal(request.patientName, 'Ali Demo');
+  assert.equal(request.patientName, PATIENT_NAME);
   assert.match(request.date, /^\d{4}-\d{2}-\d{2}$/);
   assert.notEqual(request.date, '1999-01-01');
   assert.equal(res.data.message, `Request ${request.id} submitted successfully`);
