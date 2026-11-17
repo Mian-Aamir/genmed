@@ -631,6 +631,21 @@ input[aria-invalid="true"] {
   font-size: 11px;
   padding-inline: 10px;
 }
+.password-strength {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 4px 10px;
+  margin: -8px 0 16px;
+  padding: 10px 12px;
+  border-radius: 7px;
+  font-size: 12px;
+  background: var(--background);
+  border: 1px solid var(--border);
+}
+.password-strength p { grid-column: 1 / -1; margin: 0; color: var(--muted); line-height: 1.45; }
+.password-strength-weak { border-color: #dca6a1; }
+.password-strength-moderate { border-color: #e6c981; }
+.password-strength-strong { border-color: #9bc9af; }
 .full-width {
   width: 100%;
 }

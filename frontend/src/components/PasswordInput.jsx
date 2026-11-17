@@ -7,6 +7,7 @@ export default function PasswordInput({
   error,
   newPassword = false,
   hint,
+  onChange,
 }) {
   const [visible, setVisible] = useState(false);
   return (
@@ -23,6 +24,7 @@ export default function PasswordInput({
           required
           aria-invalid={Boolean(error)}
           aria-describedby={`${id}-help`}
+          onChange={onChange}
         />
         <button
           className="icon-button"
