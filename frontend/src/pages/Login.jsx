@@ -3,11 +3,13 @@ import { Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { demoUsers, dashboardPath } from '../data/demoUsers';
 import PasswordInput from '../components/PasswordInput';
+import PasswordStrengthMeter from '../components/PasswordStrengthMeter';
 import Icon from '../components/Icon';
 
 export default function Login() {
   const { user, login, recordFailure, isLocked, remaining } = useAuth();
   const [errors, setErrors] = useState({});
+  const [strength, setStrength] = useState(null);
   if (user) return <Navigate to={dashboardPath(user.role)} replace />;
 
   function submit(event) {
@@ -22,6 +24,7 @@ export default function Login() {
     if (email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) next.email = 'Enter a valid email address.';
     if (!password || password.length > 128) next.password = 'Enter the demo password (maximum 128 characters).';
     form.elements.namedItem('password').value = '';
+    setStrength(null);
     if (Object.keys(next).length) {
       recordFailure();
       setErrors({ ...next, form: 'Invalid email or password.' });
@@ -31,6 +34,12 @@ export default function Login() {
     const result = login(email, password);
     if (!result.ok) setErrors({ form: result.message });
     else form.reset();
+  }
+
+  function checkStrength(event) {
+    // SECURITY: Store feedback only, never the password. The instructor helper evaluates the live input.
+    const helper = window.checkPasswordStrength;
+    setStrength(typeof helper === 'function' && event.target.value ? helper(event.target.value) : null);
   }
 
   return <section className="container auth-layout">
@@ -65,7 +74,8 @@ export default function Login() {
             <input id="email" name="email" type="email" autoComplete="username" maxLength={254} required aria-invalid={Boolean(errors.email)} aria-describedby="email-error" />
             <span id="email-error" className="field-error">{errors.email}</span>
           </div>
-          <PasswordInput id="password" label="Password" error={errors.password} hint="Enter the exact password for your chosen demo account." />
+          <PasswordInput id="password" label="Password" error={errors.password} hint="Enter the exact password for your chosen demo account." onChange={checkStrength} />
+          <PasswordStrengthMeter strength={strength} />
           <button type="submit" className="button full-width">Login <Icon name="arrow" size={18} /></button>
         </fieldset>
         <div className="form-status" role="status" aria-live="polite">

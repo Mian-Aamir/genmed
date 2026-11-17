@@ -2,17 +2,29 @@ import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import ReviewSummary from '../components/ReviewSummary';
 import Icon from '../components/Icon';
+import { REVIEW_DECISIONS, validateReview } from '../services/reviewValidation';
 
 function ReviewCard({ request }) {
   const { decideReview } = useAuth();
   const [note, setNote] = useState('');
   const [result, setResult] = useState(null);
+  const [errors, setErrors] = useState({});
   function submit(event) {
     event.preventDefault();
     const status = new FormData(event.currentTarget).get('decision');
-    const outcome = decideReview(request.id, status, note);
+    const validation = validateReview({ decision: status, note });
+    if (!validation.ok) {
+      setErrors(validation.errors);
+      setResult({ ok: false, message: 'Please check the highlighted fields.' });
+      return;
+    }
+    // SECURITY: The service repeats authorization and validation at action time.
+    const outcome = decideReview(request.id, validation.values.decision, validation.values.note);
     setResult(outcome);
-    if (outcome.ok) setNote('');
+    if (outcome.ok) {
+      setNote('');
+      setErrors({});
+    }
   }
   return <article className="dashboard-panel">
     <ReviewSummary request={request} />
@@ -20,15 +32,16 @@ function ReviewCard({ request }) {
     <div className="internal-note"><strong>Doctor-only internal note</strong><p>{request.internalNote || 'No internal note yet.'}</p></div>
     {request.status === 'pending' && <form onSubmit={submit}>
       <div className="field"><label htmlFor={`decision-${request.id}`}>Demo review decision</label>
-        <select id={`decision-${request.id}`} name="decision" defaultValue="" required>
+        <select id={`decision-${request.id}`} name="decision" defaultValue="" required aria-invalid={Boolean(errors.decision)} aria-describedby={`decision-error-${request.id}`} onChange={() => setErrors(previous => ({ ...previous, decision: '' }))}>
           <option value="" disabled>Choose a decision</option>
-          <option value="reviewed">Mark reviewed (demo only)</option>
-          <option value="discussion">Needs discussion</option>
+          {REVIEW_DECISIONS.map(decision => <option key={decision} value={decision}>{decision === 'reviewed' ? 'Mark reviewed (demo only)' : 'Needs discussion'}</option>)}
         </select>
+        <span id={`decision-error-${request.id}`} className="field-error">{errors.decision}</span>
       </div>
       <div className="field"><label htmlFor={`note-${request.id}`}>Internal note</label>
-        <textarea id={`note-${request.id}`} value={note} onChange={event => setNote(event.target.value.slice(0, 300))} maxLength={300} rows={3} required aria-describedby={`note-help-${request.id}`} />
+        <textarea id={`note-${request.id}`} value={note} onChange={event => { setNote(event.target.value.slice(0, 300)); setErrors(previous => ({ ...previous, note: '' })); }} maxLength={300} rows={3} required aria-invalid={Boolean(errors.note)} aria-describedby={`note-help-${request.id} note-error-${request.id}`} />
         <span id={`note-help-${request.id}`} className="field-hint">{note.length}/300 · Use fictional information only. Visible to the Doctor role.</span>
+        <span id={`note-error-${request.id}`} className="field-error">{errors.note}</span>
       </div>
       <button type="submit" className="button">Save demo review</button>
     </form>}

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { CATEGORIES, addOwnRequest, listOwnRequests } from '../services/requestStore';
+import SecureFileSelection from '../components/SecureFileSelection';
 import '../styles/request.css';
 
 const emptyFields = { medicine: '', category: '', quantity: '', notes: '' };
@@ -10,6 +11,7 @@ export default function RequestMedicine() {
   const { user } = useAuth();
   const [fields, setFields] = useState({ ...emptyFields });
   const [feedback, setFeedback] = useState(null);
+  const [fileResetKey, setFileResetKey] = useState(0);
   const result = listOwnRequests(user);
   const requests = result.ok ? result.requests : [];
   const errors = feedback?.errors || {};
@@ -27,6 +29,7 @@ export default function RequestMedicine() {
     setFeedback(outcome);
     if (outcome.ok) {
       setFields({ ...emptyFields });
+      setFileResetKey(previous => previous + 1);
     } else if (outcome.errors) {
       const firstField = Object.keys(outcome.errors)[0];
       event.currentTarget.elements.namedItem(firstField)?.focus();
@@ -84,6 +87,7 @@ export default function RequestMedicine() {
           <span id="notes-count" className="field-hint">{fields.notes.length}/200 characters</span>
           <span id="notes-error" className="field-error">{errors.notes}</span>
         </div>
+        <SecureFileSelection key={fileResetKey} />
         <button className="button" type="submit">Submit Request</button>
       </form>
       <section className="request-section" aria-labelledby="own-requests-heading">
