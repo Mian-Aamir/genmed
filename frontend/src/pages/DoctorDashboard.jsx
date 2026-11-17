@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import ReviewSummary from '../components/ReviewSummary';
+import RequestStatusManager from '../components/RequestStatusManager';
 import Icon from '../components/Icon';
 import { REVIEW_NOTE_MAX, validateReview } from '../services/requestValidation';
 
@@ -77,5 +78,6 @@ export default function DoctorDashboard() {
     <p role="status" className="fine-print">{visible.length} requests shown. Patient contact details are masked.</p>
     <div className="review-grid">{visible.map(request => <ReviewCard key={request.id} request={request} />)}</div>
     {!visible.length && <p className="empty-state">No requests in this category.</p>}
+    <RequestStatusManager />
   </section>;
 }

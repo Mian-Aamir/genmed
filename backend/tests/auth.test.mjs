@@ -14,6 +14,17 @@ test('health check confirms the database connection', async () => {
   assert.deepEqual(res.data, { ok: true, service: 'genmed-api', database: 'connected' });
 });
 
+test('medicine catalogue is served from the database (replaces the hardcoded frontend list)', async () => {
+  const res = await api.call('GET', '/api/medicines');
+  assert.equal(res.status, 200);
+  assert.equal(res.data.ok, true);
+  const count = api.db.prepare('SELECT COUNT(*) AS n FROM medicines').get().n;
+  assert.ok(count > 0);
+  assert.equal(res.data.medicines.length, count);
+  assert.deepEqual(Object.keys(res.data.medicines[0]).sort(),
+    ['brand', 'form', 'formula', 'id', 'manufacturer', 'pack', 'price', 'strength']);
+});
+
 test('passwords are stored as bcrypt hashes, never plaintext', () => {
   const rows = api.db.prepare('SELECT email, password_hash FROM users').all();
   assert.ok(rows.length >= 3);

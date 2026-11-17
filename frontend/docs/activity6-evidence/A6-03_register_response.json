@@ -11,8 +11,8 @@
   },
   "tokenPayload": {
     "role": "patient",
-    "iat": 1794817121,
-    "exp": 1794820721,
+    "iat": 1794848334,
+    "exp": 1794851934,
     "aud": "genmed-web",
     "iss": "genmed-api",
     "sub": "2"

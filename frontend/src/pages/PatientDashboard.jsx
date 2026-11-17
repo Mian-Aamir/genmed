@@ -1,12 +1,14 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { medicines } from '../data/medicines';
+import { useMedicines } from '../services/medicineCatalog';
 import ReviewSummary from '../components/ReviewSummary';
 import Icon from '../components/Icon';
 
 export default function PatientDashboard() {
   const { user, requests, requestReview, loadReviews } = useAuth();
+  // Activity 6: the medicine choices come from GET /api/medicines.
+  const catalog = useMedicines();
   // Activity 6: always show the latest statuses from GET /api/reviews when the page opens.
   useEffect(() => { loadReviews(); }, [loadReviews]);
   const [message, setMessage] = useState(null);
@@ -41,14 +43,15 @@ export default function PatientDashboard() {
           <form onSubmit={submit}>
             <div className="field">
               <label htmlFor="requested-medicine">Medicine</label>
-              <select id="requested-medicine" name="medicineId" defaultValue="" required>
-                <option value="" disabled>Choose a medicine</option>
-                {medicines.map(medicine => (
+              <select id="requested-medicine" name="medicineId" defaultValue="" required disabled={catalog.status !== 'ready'}>
+                <option value="" disabled>{catalog.status === 'loading' ? 'Loading medicines…' : 'Choose a medicine'}</option>
+                {catalog.medicines.map(medicine => (
                   <option key={medicine.id} value={medicine.id}>{medicine.brand} — {medicine.strength}</option>
                 ))}
               </select>
+              {catalog.status === 'error' && <span className="field-error" role="alert">{catalog.message}</span>}
             </div>
-            <button className="button" type="submit">Submit review request</button>
+            <button className="button" type="submit" disabled={catalog.status !== 'ready'}>Submit review request</button>
             <p role="status" className={message?.ok ? 'success-message' : 'field-error'}>{message?.message}</p>
           </form>
         </section>

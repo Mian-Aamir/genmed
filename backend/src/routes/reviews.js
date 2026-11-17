@@ -57,7 +57,7 @@ export function reviewRoutes(db) {
       throw new HttpError(409, 'You already have a pending request for this medicine.');
     }
     if (countForPatient.get(req.user.id).n >= MAX_REVIEWS_PER_PATIENT) {
-      throw new HttpError(409, `The demo limit is ${MAX_REVIEWS_PER_PATIENT} requests per patient.`);
+      throw new HttpError(409, `You can have at most ${MAX_REVIEWS_PER_PATIENT} review requests.`);
     }
     const id = Number(insert.run(req.user.id, values.medicineId).lastInsertRowid);
     res.status(201).json({ ok: true, id, message: 'Review request submitted.' });

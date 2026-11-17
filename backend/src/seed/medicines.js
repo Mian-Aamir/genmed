@@ -1,4 +1,5 @@
-// Sample catalogue copied from frontend/src/data/medicines.js (Activities 1-5).
+// Sample catalogue (originally the hardcoded frontend list from Activities 1-5). The frontend now
+// loads it from GET /api/medicines.
 // Illustrative fixtures, not verified brand/manufacturer/price records.
 export const sampleMedicines = [
   { id: 1, brand: 'Panadol', formula: 'Paracetamol', strength: '500 mg', form: 'Tablet', manufacturer: 'Haleon (sample)', pack: '10 tablets', price: 40 },

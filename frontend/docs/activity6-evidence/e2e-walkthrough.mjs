@@ -20,6 +20,9 @@ const browser = await chromium.launch({ channel: 'msedge', headless: true });
 const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
 page.on('dialog', async dialog => { dialogs.push(dialog.message()); await dialog.dismiss(); });
 page.on('console', msg => { if (msg.type() === 'error') consoleErrors.push(msg.text()); });
+// The medicine catalogue must come from the backend (GET /api/medicines), not a hardcoded list.
+const catalogueResponses = [];
+page.on('response', r => { if (r.url().endsWith('/api/medicines')) catalogueResponses.push(r.status()); });
 
 async function shot(id, name) {
   const file = `${id}_${name}.png`;
@@ -132,6 +135,16 @@ const reviewRes = await reviewPost;
 await page.getByText('Review request submitted.').waitFor();
 record('A6-07', 'Module 1 submit', 'Request review of Brufen (id 4)', '201, listed under My review requests', `HTTP ${reviewRes.status()}`, reviewRes.status() === 201, await shot('A6-07', 'patient_review_requested'));
 
+// A6-14 Medicine search uses the catalogue served by the backend
+await page.getByRole('link', { name: 'Find medicine' }).first().click();
+await page.waitForURL('**/search');
+await page.getByText(/\d+ sample medicines · \d+ active/).waitFor();
+await page.fill('input[type=search]', 'Panadol');
+await page.getByText(/sample options in \d+ matching groups/).waitFor();
+const catalogueOk = catalogueResponses.length > 0 && catalogueResponses.every(status => status === 200);
+record('A6-14', 'Catalogue from backend (no hardcoded data)', 'Search "Panadol"', 'Results built from GET /api/medicines (200)',
+  `GET /api/medicines -> ${catalogueResponses.join(', ') || 'not called'}, results shown`, catalogueOk, await shot('A6-14', 'search_from_backend_catalogue'));
+
 // A6-08 Role check in UI
 await spaNavigate('/doctor');
 await page.getByRole('heading', { name: 'Access Denied' }).waitFor();
@@ -168,6 +181,19 @@ record('A6-11', 'Module 1 doctor decision (role: doctor)', 'Doctor logs in, mark
   '200, note shown as text, no alert', `HTTP ${patchRes.status()}, alerts=${dialogs.length}`,
   patchRes.status() === 200 && dialogs.length === 0, await shot('A6-11', 'doctor_review_saved'));
 
+// A6-15 Module 2 doctor action: update the status of the patient's medicine request
+const requestCard = page.locator('article', { hasText: created.id }).filter({ hasText: 'Update status' }).first();
+await requestCard.waitFor();
+await requestCard.getByText(xss).waitFor();
+await requestCard.locator('select').selectOption('Approved');
+const statusPatch = page.waitForResponse(r => r.url().endsWith(`/api/requests/${created.id}/status`) && r.request().method() === 'PATCH');
+await requestCard.getByRole('button', { name: 'Save status' }).click();
+const statusRes = await statusPatch;
+await requestCard.getByText('Status updated to Approved').waitFor();
+record('A6-15', 'Module 2 doctor status update (role: doctor)', `Doctor sets ${created.id} to Approved`,
+  '200, new status shown, patient note shown as text', `HTTP ${statusRes.status()}, alerts=${dialogs.length}`,
+  statusRes.status() === 200 && dialogs.length === 0, await shot('A6-15', 'doctor_request_status_updated'));
+
 // A6-12 Refresh drops the in-memory token
 await page.reload();
 await page.getByRole('heading', { name: 'Login to GenMed' }).waitFor();
@@ -179,6 +205,13 @@ res = await login(PATIENT.email, PATIENT.password);
 await page.waitForURL('**/patient');
 await page.locator('article', { hasText: 'Brufen' }).filter({ hasText: 'Reviewed' }).first().waitFor();
 record('A6-13', 'Data persisted in database', 'Registered patient logs in again', 'Doctor decision visible', `HTTP ${res.status()}, status "Reviewed" shown`, res.status() === 200, await shot('A6-13', 'patient_sees_reviewed_status'));
+
+// A6-16 Module 2 persistence: the patient sees the status the doctor set
+await page.getByRole('link', { name: 'Track Requests' }).first().click();
+await page.waitForURL('**/track');
+await page.locator('.track-table tr', { hasText: created.id }).locator('.track-status', { hasText: 'Approved' }).waitFor();
+record('A6-16', 'Module 2 status persisted', 'Patient opens Track Requests', `${created.id} shows "Approved"`, `${created.id} Approved`, true,
+  await shot('A6-16', 'patient_sees_approved_status'));
 
 writeFileSync(path.join(OUT, 'results.json'), JSON.stringify({
   browser: `Microsoft Edge ${browser.version()} (headless)`, frontend: BASE, backend: 'http://localhost:4000 (via Vite proxy)',

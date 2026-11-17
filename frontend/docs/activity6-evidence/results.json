@@ -2,7 +2,7 @@
   "browser": "Microsoft Edge 157.0.4341.60 (headless)",
   "frontend": "http://localhost:5173",
   "backend": "http://localhost:4000 (via Vite proxy)",
-  "date": "2026-11-16T08:18:46.400Z",
+  "date": "2026-11-16T16:59:04.130Z",
   "alerts": [],
   "consoleErrors": [
     "Failed to load resource: the server responded with a status of 409 (Conflict) (expected: duplicate test A6-09)",
@@ -73,6 +73,15 @@
       "screenshot": "A6-07_patient_review_requested.png"
     },
     {
+      "id": "A6-14",
+      "feature": "Catalogue from backend (no hardcoded data)",
+      "action": "Search \"Panadol\"",
+      "expected": "Results built from GET /api/medicines (200)",
+      "actual": "GET /api/medicines -> 200, results shown",
+      "pass": true,
+      "screenshot": "A6-14_search_from_backend_catalogue.png"
+    },
+    {
       "id": "A6-08",
       "feature": "Role-based access (UI)",
       "action": "Patient opens /doctor",
@@ -109,6 +118,15 @@
       "screenshot": "A6-11_doctor_review_saved.png"
     },
     {
+      "id": "A6-15",
+      "feature": "Module 2 doctor status update (role: doctor)",
+      "action": "Doctor sets GM-1001 to Approved",
+      "expected": "200, new status shown, patient note shown as text",
+      "actual": "HTTP 200, alerts=0",
+      "pass": true,
+      "screenshot": "A6-15_doctor_request_status_updated.png"
+    },
+    {
       "id": "A6-12",
       "feature": "Token kept in memory only",
       "action": "Reload /doctor while logged in",
@@ -125,6 +143,15 @@
       "actual": "HTTP 200, status \"Reviewed\" shown",
       "pass": true,
       "screenshot": "A6-13_patient_sees_reviewed_status.png"
+    },
+    {
+      "id": "A6-16",
+      "feature": "Module 2 status persisted",
+      "action": "Patient opens Track Requests",
+      "expected": "GM-1001 shows \"Approved\"",
+      "actual": "GM-1001 Approved",
+      "pass": true,
+      "screenshot": "A6-16_patient_sees_approved_status.png"
     }
   ]
 }

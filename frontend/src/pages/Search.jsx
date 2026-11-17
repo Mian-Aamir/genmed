@@ -2,9 +2,12 @@ import { useEffect, useMemo, useState } from "react";
 import SearchBar from "../components/SearchBar";
 import MedicineCard from "../components/MedicineCard";
 import Icon from "../components/Icon";
-import { medicines, comparisonKey } from "../data/medicines";
+import { comparisonKey, useMedicines } from "../services/medicineCatalog";
 
 export default function Search() {
+  // Activity 6: the catalogue comes from GET /api/medicines (SQLite), not a hardcoded list.
+  const catalog = useMedicines();
+  const { medicines } = catalog;
   const [query, setQuery] = useState("");
   const [debounced, setDebounced] = useState("");
   const [form, setForm] = useState("all");
@@ -33,7 +36,7 @@ export default function Search() {
         maximum: Math.max(...prices),
       };
     });
-  }, [debounced]);
+  }, [debounced, medicines]);
   const visibleGroups = groups.filter(
     (group) => form === "all" || group.all[0].form === form,
   );
@@ -129,7 +132,18 @@ export default function Search() {
           </div>
         </div>
         <div aria-busy={searching}>
-          {searching ? (
+          {catalog.status === "error" ? (
+            <div className="empty-state" role="alert">
+              <Icon name="shield" size={36} />
+              <h2>Medicines could not be loaded</h2>
+              <p>{catalog.message}</p>
+            </div>
+          ) : catalog.status === "loading" ? (
+            <div className="empty-state">
+              <Icon name="search" size={36} />
+              <h3>Loading the medicine catalogue…</h3>
+            </div>
+          ) : searching ? (
             <div className="empty-state">
               <Icon name="search" size={36} />
               <h3>Searching sample medicines…</h3>
@@ -147,7 +161,9 @@ export default function Search() {
                 Your comparison will appear here.
               </p>
               <span className="badge">
-                15 sample medicines · 5 active ingredients
+                {medicines.length} sample medicines ·{" "}
+                {new Set(medicines.map((item) => item.formula)).size} active
+                ingredients
               </span>
             </div>
           ) : !count ? (

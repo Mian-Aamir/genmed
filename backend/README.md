@@ -31,7 +31,7 @@ npm run dev
 If `JWT_SECRET` is missing, the server generates a random one for that run and prints a
 warning. Logins then stop working after a restart.
 
-`npm test` runs 37 API tests against an in-memory database.
+`npm test` runs 38 API tests against an in-memory database.
 
 ## Accounts
 
@@ -67,7 +67,7 @@ All responses are JSON: `{ ok: true, ... }` on success and `{ ok: false, message
 | Method | Path | Auth / role | Module | Description |
 | --- | --- | --- | --- | --- |
 | GET | `/api/health` | none | shared | Server and database status |
-| GET | `/api/medicines` | none | shared | Sample medicine catalogue |
+| GET | `/api/medicines` | none | shared | Sample medicine catalogue. The frontend's Search page, patient dashboard and review cards load it from here |
 | POST | `/api/auth/register` | none | 1 | `{ name, email, password }` → 201 `{ token, user }`. Always creates a **patient** and ignores any `role` field. 400 with field errors, 409 if the email is taken, 429 after 10 sign-ups per device in 10 minutes |
 | POST | `/api/auth/login` | none | 1 | `{ email, password }` → `{ token, user: { id, name, role } }`. 401 on bad credentials, 429 after 5 failures (30 s lock) |
 | GET | `/api/auth/me` | any role | 1 | The user behind the token |
@@ -77,7 +77,7 @@ All responses are JSON: `{ ok: true, ... }` on success and `{ ok: false, message
 | GET | `/api/requests` | patient, doctor | 2 | A patient gets only their own requests, newest first. A doctor gets all |
 | GET | `/api/requests/:reference` | patient, doctor | 2 | For example `GM-1002`. Another patient's reference returns 404, the same as a missing one |
 | POST | `/api/requests` | **patient** | 2 | `{ medicine, category, quantity, notes }` → 201 with the new `GM-` reference. 400 with field errors |
-| PATCH | `/api/requests/:reference/status` | **doctor** | 2 | `{ status: Pending\|Approved\|Dispatched\|Delivered }`. A patient gets 403 |
+| PATCH | `/api/requests/:reference/status` | **doctor** | 2 | `{ status: Pending\|Approved\|Dispatched\|Delivered }`. Used by the "Medicine requests" panel on the doctor dashboard. A patient gets 403 |
 
 Status codes used: `400` invalid input, `401` missing, invalid, modified or expired token,
 `403` wrong role, `404` not found, `409` conflict or limit reached, `429` too many login
