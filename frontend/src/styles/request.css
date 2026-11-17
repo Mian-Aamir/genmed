@@ -35,6 +35,16 @@
   white-space: pre-wrap;
 }
 
+.medicine-request-page .supporting-file-field input[type="file"] {
+  padding: 9px;
+}
+
+.medicine-request-page .file-selected {
+  color: var(--primary-dark);
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+
 @media (min-width: 650px) {
   .medicine-request-page .request-form-row,
   .medicine-request-page .request-list {

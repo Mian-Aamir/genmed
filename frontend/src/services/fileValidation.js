@@ -55,6 +55,17 @@ export function validateFileMeta(file) {
   return { ok: true, extension };
 }
 
+// Compatibility API from PR #7 (Muhammad Aamir), kept on top of the stricter checks above.
+export const MAX_SUPPORTING_FILE_SIZE = MAX_FILE_BYTES;
+export const ALLOWED_SUPPORTING_EXTENSIONS = Object.freeze(Object.keys(ALLOWED_FILE_TYPES).map(extension => `.${extension}`));
+
+/** Synchronous name/size/type screening. Returns { ok, fileName } or { ok: false, message }. */
+export function validateSupportingFile(file) {
+  // A missing type is treated like the empty type browsers report for unknown files.
+  const meta = validateFileMeta(file && typeof file === 'object' ? { name: file.name, size: file.size, type: file.type ?? '' } : file);
+  return meta.ok ? { ok: true, fileName: file.name.trim() } : { ok: false, message: meta.error };
+}
+
 // First bytes ("magic numbers") of each allowed format.
 const SIGNATURES = Object.freeze({
   pdf: [0x25, 0x50, 0x44, 0x46], // %PDF
