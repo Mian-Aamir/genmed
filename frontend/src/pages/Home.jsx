@@ -26,6 +26,9 @@ export default function Home() {
               <Link className="button" to="/search">
                 Find Cheaper Medicine <Icon name="arrow" size={19} />
               </Link>
+              <Link className="button secondary" to="/register">
+                Create account
+              </Link>
               <Link className="button secondary" to="/login">
                 Login
               </Link>

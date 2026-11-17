@@ -1,20 +1,19 @@
 import { useState } from 'react';
-import { Navigate } from 'react-router-dom';
+import { Link, Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { demoUsers, dashboardPath } from '../data/demoUsers';
+import { dashboardPath } from '../data/roles';
 import PasswordInput from '../components/PasswordInput';
-import PasswordStrengthMeter from '../components/PasswordStrengthMeter';
 import Icon from '../components/Icon';
 
 export default function Login() {
-  const { user, login, recordFailure, isLocked, remaining } = useAuth();
+  const { user, login, isLocked, remaining } = useAuth();
   const [errors, setErrors] = useState({});
-  const [strength, setStrength] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
   if (user) return <Navigate to={dashboardPath(user.role)} replace />;
 
-  function submit(event) {
+  async function submit(event) {
     event.preventDefault();
-    if (isLocked()) return;
+    if (isLocked() || submitting) return;
     const form = event.currentTarget;
     const fields = new FormData(form);
     // SECURITY: Normalize emails, preserve exact passwords, and clear submitted credentials immediately.
@@ -22,68 +21,54 @@ export default function Login() {
     const password = String(fields.get('password') || '');
     const next = {};
     if (email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) next.email = 'Enter a valid email address.';
-    if (!password || password.length > 128) next.password = 'Enter the demo password (maximum 128 characters).';
+    if (!password || password.length > 128) next.password = 'Enter your password (maximum 128 characters).';
     form.elements.namedItem('password').value = '';
-    setStrength(null);
     if (Object.keys(next).length) {
-      recordFailure();
       setErrors({ ...next, form: 'Invalid email or password.' });
       form.elements.namedItem(Object.keys(next)[0])?.focus();
       return;
     }
-    const result = login(email, password);
+    // Activity 6: credentials are verified by the backend (bcrypt), which returns a signed JWT.
+    setErrors({});
+    setSubmitting(true);
+    const result = await login(email, password);
+    setSubmitting(false);
     if (!result.ok) setErrors({ form: result.message });
     else form.reset();
   }
 
-  function checkStrength(event) {
-    // SECURITY: Store feedback only, never the password. The instructor helper evaluates the live input.
-    const helper = window.checkPasswordStrength;
-    setStrength(typeof helper === 'function' && event.target.value ? helper(event.target.value) : null);
-  }
-
   return <section className="container auth-layout">
     <aside className="auth-story">
-      <span className="eyebrow">GENMED · DEVELOPMENT ACTIVITY 2</span>
+      <span className="eyebrow">GENMED · YOUR ACCOUNT</span>
       <h1>The right tools.<br /><em>For the right role.</em></h1>
-      <p>Patients explore medicine options and track review requests. Doctors review the fictional requests in a separate workspace.</p>
+      <p>Patients compare medicine options, submit requests and track their status. Doctors review requests in a separate workspace.</p>
       <div className="auth-illustration"><Icon name="shield" size={56} /><div>
         <strong>Role-aware by design.</strong>
-        <p>Your demo account determines your role. Registration and real account verification will be added with the backend.</p>
+        <p>Your account determines your role. Passwords are verified by the GenMed server, never in the browser.</p>
       </div></div>
-      <p className="fine-print">Frontend demonstration only. These accounts are not real patients or licensed professionals.</p>
     </aside>
     <div className="auth-card">
       <span className="eyebrow">WELCOME BACK</span>
       <h2>Login to GenMed</h2>
-      <p>Use one of the public classroom accounts below.</p>
-      <details className="demo-accounts" open>
-        <summary>Demo accounts — fictional and public</summary>
-        {demoUsers.map(account => <div key={account.id}>
-          <strong>{account.role === 'patient' ? 'Patient' : 'Doctor'} · {account.name}</strong>
-          <span>Email: <code>{account.email}</code></span>
-          <span>Password: <code>{account.password}</code></span>
-        </div>)}
-      </details>
-      <p className="demo-note">Only these demo credentials are accepted. Do not enter a real password. Sessions and review changes reset on page refresh.</p>
+      <p>New to GenMed? <Link to="/register">Create an account</Link></p>
       <form noValidate onSubmit={submit}>
-        <fieldset disabled={remaining > 0}>
-          <legend className="sr-only">Demo login details</legend>
+        <fieldset disabled={remaining > 0 || submitting}>
+          <legend className="sr-only">Login details</legend>
           <div className="field">
             <label htmlFor="email">Email address</label>
             <input id="email" name="email" type="email" autoComplete="username" maxLength={254} required aria-invalid={Boolean(errors.email)} aria-describedby="email-error" />
             <span id="email-error" className="field-error">{errors.email}</span>
           </div>
-          <PasswordInput id="password" label="Password" error={errors.password} hint="Enter the exact password for your chosen demo account." onChange={checkStrength} />
-          <PasswordStrengthMeter strength={strength} />
-          <button type="submit" className="button full-width">Login <Icon name="arrow" size={18} /></button>
+          <PasswordInput id="password" label="Password" error={errors.password} hint="Enter the password for your account." />
+          <button type="submit" className="button full-width">{submitting ? 'Signing in…' : 'Login'} <Icon name="arrow" size={18} /></button>
         </fieldset>
         <div className="form-status" role="status" aria-live="polite">
           {remaining > 0 ? <p className="field-error">Too many attempts. Try again in {remaining} seconds.</p> : errors.form && <p className="field-error">{errors.form}</p>}
         </div>
       </form>
+      <Link className="button secondary full-width" to="/register">Create a new account</Link>
       <p className="privacy-note"><Icon name="shield" size={16} /> We collect only what is needed to run your account.</p>
-      <p className="fine-print">No browser storage. No real account creation in this activity.</p>
+      <p className="fine-print">Your session is kept in memory only and ends when you log out or close the page.</p>
     </div>
   </section>;
 }

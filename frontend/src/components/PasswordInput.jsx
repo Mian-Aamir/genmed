@@ -8,6 +8,7 @@ export default function PasswordInput({
   newPassword = false,
   hint,
   onChange,
+  describedBy,
 }) {
   const [visible, setVisible] = useState(false);
   return (
@@ -15,6 +16,7 @@ export default function PasswordInput({
       <label htmlFor={id}>{label}</label>
       <div className="password-wrap">
         {/* SECURITY: Passwords stay only in the live form and use the appropriate autocomplete. */}
+        {/* SECURITY: Uncontrolled input: the password value is never copied into React state. */}
         <input
           id={id}
           name={id}
@@ -22,9 +24,9 @@ export default function PasswordInput({
           maxLength={128}
           autoComplete={newPassword ? "new-password" : "current-password"}
           required
-          aria-invalid={Boolean(error)}
-          aria-describedby={`${id}-help`}
           onChange={onChange}
+          aria-invalid={Boolean(error)}
+          aria-describedby={[`${id}-help`, describedBy].filter(Boolean).join(" ")}
         />
         <button
           className="icon-button"

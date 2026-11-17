@@ -1,19 +1,24 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { medicines } from '../data/medicines';
+import { useMedicines } from '../services/medicineCatalog';
 import ReviewSummary from '../components/ReviewSummary';
 import Icon from '../components/Icon';
 
 export default function PatientDashboard() {
-  const { user, requests, requestReview } = useAuth();
+  const { user, requests, requestReview, loadReviews } = useAuth();
+  // Activity 6: the medicine choices come from GET /api/medicines.
+  const catalog = useMedicines();
+  // Activity 6: always show the latest statuses from GET /api/reviews when the page opens.
+  useEffect(() => { loadReviews(); }, [loadReviews]);
   const [message, setMessage] = useState(null);
 
-  function submit(event) {
+  async function submit(event) {
     event.preventDefault();
     const form = event.currentTarget;
     const medicineId = Number(new FormData(form).get('medicineId'));
-    const result = requestReview(medicineId);
+    // Activity 6: POST /api/reviews. The server sets the owner from the JWT.
+    const result = await requestReview(medicineId);
     setMessage(result);
     if (result.ok) form.reset();
   }
@@ -22,7 +27,7 @@ export default function PatientDashboard() {
     <section className="container dashboard-page">
       <span className="eyebrow">PATIENT WORKSPACE</span>
       <h1>Welcome, {user.name}</h1>
-      <p className="dashboard-intro">Explore options, request a demo review, and follow your requests in one place.</p>
+      <p className="dashboard-intro">Explore options, request a medicine review, and follow your requests in one place.</p>
       <div className="dashboard-actions">
         <Link className="button" to="/search">
           <Icon name="search" size={18} />
@@ -34,18 +39,19 @@ export default function PatientDashboard() {
       <div className="dashboard-grid">
         <section className="dashboard-panel" id="new-request" aria-labelledby="request-title">
           <h2 id="request-title">Request a medicine review</h2>
-          <p>Choose a sample medicine for the classroom review workflow. No prescription or personal medical history is needed.</p>
+          <p>Choose a medicine and a doctor will review it. No prescription or personal medical history is needed.</p>
           <form onSubmit={submit}>
             <div className="field">
-              <label htmlFor="requested-medicine">Sample medicine</label>
-              <select id="requested-medicine" name="medicineId" defaultValue="" required>
-                <option value="" disabled>Choose a medicine</option>
-                {medicines.map(medicine => (
+              <label htmlFor="requested-medicine">Medicine</label>
+              <select id="requested-medicine" name="medicineId" defaultValue="" required disabled={catalog.status !== 'ready'}>
+                <option value="" disabled>{catalog.status === 'loading' ? 'Loading medicines…' : 'Choose a medicine'}</option>
+                {catalog.medicines.map(medicine => (
                   <option key={medicine.id} value={medicine.id}>{medicine.brand} — {medicine.strength}</option>
                 ))}
               </select>
+              {catalog.status === 'error' && <span className="field-error" role="alert">{catalog.message}</span>}
             </div>
-            <button className="button" type="submit">Submit review request</button>
+            <button className="button" type="submit" disabled={catalog.status !== 'ready'}>Submit review request</button>
             <p role="status" className={message?.ok ? 'success-message' : 'field-error'}>{message?.message}</p>
           </form>
         </section>
@@ -53,12 +59,12 @@ export default function PatientDashboard() {
           <Icon name="shield" size={32} />
           <h2>Your information, limited by role.</h2>
           <p>You can see only your own requests. Doctor contact views show masked email addresses, and internal review notes are omitted from your view.</p>
-          <p className="fine-print">All records are fictional. This is a frontend access-control demonstration, not a confidential medical system.</p>
+          <p className="fine-print">Access rules are enforced by the GenMed server, not just by this page.</p>
         </aside>
       </div>
       <section id="my-requests" className="request-section" aria-labelledby="my-requests-title">
         <h2 id="my-requests-title">My review requests</h2>
-        <p>Status updates appear here after the Doctor demo account reviews your request in this browser tab.</p>
+        <p>Requests are saved on the GenMed server. Status updates appear here after the Doctor account reviews them.</p>
         {requests.length ? (
           <div className="review-grid">
             {requests.map(request => (
@@ -66,14 +72,14 @@ export default function PatientDashboard() {
                 <ReviewSummary request={request} />
                 <p className="fine-print">
                   {request.status === 'pending'
-                    ? 'Awaiting a demo review.'
-                    : 'Demo workflow completed. Consult a real doctor or pharmacist before making any treatment change.'}
+                    ? 'Awaiting review by a doctor.'
+                    : 'Review completed. Consult your doctor or pharmacist before making any treatment change.'}
                 </p>
               </article>
             ))}
           </div>
         ) : (
-          <p className="empty-state">No requests yet. Choose a sample medicine to get started.</p>
+          <p className="empty-state">No requests yet. Choose a medicine to get started.</p>
         )}
       </section>
       <section className="request-section" aria-labelledby="medicine-request-modules">
@@ -81,19 +87,19 @@ export default function PatientDashboard() {
         <div className="dashboard-grid">
           <article className="dashboard-panel">
             <h3>Submit Medicine Request</h3>
-            <p>Submit a demo medicine request and see its reference in My Requests.</p>
+            <p>Submit a medicine request and see its reference in My Requests.</p>
             <Link className="button" to="/request">Submit Request</Link>
           </article>
           <article className="dashboard-panel">
             <h3>View and Track Medicine Requests</h3>
-            <p>Module 2 coming soon. Tracking will be added by your teammate.</p>
+            <p>Search your requests by reference and follow their status.</p>
             <Link className="button secondary" to="/track">Track Requests</Link>
           </article>
         </div>
       </section>
       <aside className="safety-note">
         <Icon name="shield" />
-        <p>Always confirm with your doctor or pharmacist before switching medicines. Prices are approximate. Demo review decisions are not medical advice or approval.</p>
+        <p>Always confirm with your doctor or pharmacist before switching medicines. Prices are approximate. Review decisions are not a prescription or medical approval.</p>
       </aside>
     </section>
   );

@@ -65,3 +65,32 @@
     gap: 18px;
   }
 }
+
+/* Activity 5 Task 3 (Ammar Ahmad): optional supporting document. */
+.medicine-request-page .secure-file input[type='file'] {
+  width: 100%;
+  padding: 10px;
+  border: 1px dashed var(--border);
+  border-radius: 8px;
+  background: var(--background);
+}
+
+.medicine-request-page .secure-file-selected {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  margin: 8px 0 0;
+  overflow-wrap: anywhere;
+  font-size: 14px;
+}
+
+.medicine-request-page .secure-file-ok {
+  margin: 8px 0 0;
+  padding: 10px 12px;
+  color: var(--primary-dark);
+  background: var(--mint);
+  border: 1px solid var(--primary);
+  border-radius: 8px;
+  font-size: 14px;
+}

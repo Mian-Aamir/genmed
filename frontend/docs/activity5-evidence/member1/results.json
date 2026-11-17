@@ -1,0 +1,82 @@
+{
+  "summary": {
+    "dialogs": 0,
+    "problems": [],
+    "passed": 8,
+    "total": 8
+  },
+  "results": [
+    {
+      "id": "M1-00",
+      "feature": "Task 5 · Helper loaded",
+      "input": "Open Login; check typeof window.checkPasswordStrength",
+      "expected": "\"function\"",
+      "actual": "\"function\"",
+      "pass": true,
+      "shot": null
+    },
+    {
+      "id": "M1-01",
+      "feature": "Task 5 · Live strength feedback on Login",
+      "input": "Type \"ali123\"",
+      "expected": "Weak with score and helper message below the field",
+      "actual": "Password strength: Weak · Score 1/6. \"Try using a longer password.\"",
+      "pass": true,
+      "shot": "M1-01_login_strength_weak.png"
+    },
+    {
+      "id": "M1-02",
+      "feature": "Task 5 · Live strength feedback on Login",
+      "input": "Type \"Genmed2026\"",
+      "expected": "Moderate with score and helper message below the field",
+      "actual": "Password strength: Moderate · Score 3/6. \"A longer password or more variety may improve it.\"",
+      "pass": true,
+      "shot": "M1-02_login_strength_moderate.png"
+    },
+    {
+      "id": "M1-03",
+      "feature": "Task 5 · Live strength feedback on Login",
+      "input": "Type \"Gen#Med!Pharmacy2026\"",
+      "expected": "Strong with score and helper message below the field",
+      "actual": "Password strength: Strong · Score 6/6. \"Good password pattern. Avoid reusing passwords.\"",
+      "pass": true,
+      "shot": "M1-03_login_strength_strong.png"
+    },
+    {
+      "id": "M1-04",
+      "feature": "Task 4 · Password field type and toggle",
+      "input": "Check input type, click Show, then Hide",
+      "expected": "type=\"password\" by default; button has an accessible name and aria-pressed",
+      "actual": "type password → text; aria-pressed false → true; type back to password",
+      "pass": true,
+      "shot": null
+    },
+    {
+      "id": "M1-05",
+      "feature": "Task 4 · Failed login",
+      "input": "patient@example.com with wrong password \"WrongPass#2026\"",
+      "expected": "Generic error; password field and strength feedback cleared; password not in storage, cookies or URL",
+      "actual": "\"Invalid email or password.\"; password field \"\"; feedback shown: 0; storage/cookies: {}{}; URL http://localhost:4173/login",
+      "pass": true,
+      "shot": "M1-05_login_failed_cleared.png"
+    },
+    {
+      "id": "M1-06",
+      "feature": "Task 4 · Successful login stores nothing",
+      "input": "Log in as patient, then inspect localStorage, sessionStorage and cookies",
+      "expected": "All three empty",
+      "actual": "localStorage=[] sessionStorage=[] cookie=\"\"",
+      "pass": true,
+      "shot": null
+    },
+    {
+      "id": "M1-07",
+      "feature": "Task 4 · Logout clears temporary state",
+      "input": "Leave a draft request, a track search, and planted genmed_session / userPassword / authToken keys; log out; press Back; log in again",
+      "expected": "Storage keys removed (harmless \"theme\" kept); Back cannot reopen /track; draft form empty after re-login",
+      "actual": "After logout localStorage=[theme] sessionStorage=[]; Back went to /login; draft medicine \"\", notes \"\"",
+      "pass": true,
+      "shot": "M1-07a_request_draft_before_logout.png, M1-07b_request_after_relogin.png"
+    }
+  ]
+}

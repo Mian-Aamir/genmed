@@ -6,11 +6,10 @@ import {
   ALLOWED_SUPPORTING_EXTENSIONS, MAX_SUPPORTING_FILE_SIZE, validateSupportingFile,
 } from '../src/services/fileValidation.js';
 import { REVIEW_DECISIONS, validateReview } from '../src/services/reviewValidation.js';
-import { CATEGORIES, addOwnRequest, getOwnRequest, resetRequestStore } from '../src/services/requestStore.js';
-import { demoUsers } from '../src/data/demoUsers.js';
-
-const account = demoUsers.find(user => user.role === 'patient');
-const patient = { id: account.id, name: account.name, role: account.role };
+import { CATEGORIES } from '../src/services/requestStore.js';
+import { validateRequest } from '../src/services/requestValidation.js';
+// Activity 6: requests are stored by the backend, so the storage check uses the server validator.
+import { validateMedicineRequest } from '../../backend/src/validation.js';
 
 test('instructor password helper returns Weak Moderate and Strong feedback without modification', async () => {
   const helper = await readFile(new URL('../public/password_strength_helper.js', import.meta.url), 'utf8');
@@ -40,19 +39,19 @@ test('doctor review validation rejects empty unexpected and oversized input', ()
   assert.equal(validateReview({ decision: 'reviewed', note: 'x'.repeat(301) }).ok, false);
 });
 
-test('script-like medicine and notes remain stored as text and are never executed by the store', () => {
-  resetRequestStore();
+test('script-like notes stay plain text and script-like medicine names are rejected; nothing executes', () => {
+  // Activity 6: the in-memory store was replaced by the API. Saving and reading the text back
+  // through SQLite is covered in backend/tests/requests.test.mjs.
   const scriptText = '<script>globalThis.activityFiveXss = true</script>';
-  const added = addOwnRequest(patient, {
-    medicine: scriptText,
-    category: CATEGORIES[0],
-    quantity: 1,
-    notes: scriptText,
-  });
-  assert.equal(added.ok, true);
-  const detail = getOwnRequest(patient, added.request.id);
-  assert.equal(detail.request.medicine, scriptText);
-  assert.equal(detail.request.notes, scriptText);
+  const fields = { medicine: 'Paracetamol 500mg', category: CATEGORIES[0], quantity: 1, notes: scriptText };
+  for (const result of [validateRequest(fields, CATEGORIES), validateMedicineRequest(fields)]) {
+    assert.equal(result.ok, true);
+    assert.equal(result.values.notes, scriptText);
+  }
+  // Stricter than PR #7: markup is not a valid medicine name, in the browser or on the server.
+  const scriptName = { ...fields, medicine: scriptText };
+  assert.equal(validateRequest(scriptName, CATEGORIES).ok, false);
+  assert.equal(validateMedicineRequest(scriptName).ok, false);
   assert.equal(globalThis.activityFiveXss, undefined);
 });
 
@@ -64,7 +63,11 @@ test('frontend sources contain no unsafe HTML rendering, eval or browser credent
     '../src/components/SecureFileSelection.jsx',
   ];
   const source = await Promise.all(files.map(file => readFile(new URL(file, import.meta.url), 'utf8')));
-  const combined = source.join('\n');
+  // Ignore comments, which may name these sinks to explain why they are not used.
+  const combined = source.join('\n').replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '').replace(/\{\/\*[\s\S]*?\*\/\}/g, '');
   assert.doesNotMatch(combined, /dangerouslySetInnerHTML|\.innerHTML\s*=|\beval\s*\(/);
-  assert.doesNotMatch(combined, /localStorage|sessionStorage/);
+  // Nothing is ever written to browser storage or cookies. (AuthContext reads localStorage keys
+  // and clears sessionStorage only to REMOVE sensitive leftovers on start and logout.)
+  assert.doesNotMatch(combined, /(localStorage|sessionStorage)\.setItem|document\.cookie\s*=/);
+  assert.doesNotMatch(combined, /localStorage\.getItem|sessionStorage\.getItem/);
 });

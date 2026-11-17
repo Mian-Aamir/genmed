@@ -1,0 +1,157 @@
+{
+  "browser": "Microsoft Edge 157.0.4341.60 (headless)",
+  "frontend": "http://localhost:5173",
+  "backend": "http://localhost:4000 (via Vite proxy)",
+  "date": "2026-11-16T16:59:04.130Z",
+  "alerts": [],
+  "consoleErrors": [
+    "Failed to load resource: the server responded with a status of 409 (Conflict) (expected: duplicate test A6-09)",
+    "Failed to load resource: the server responded with a status of 401 (Unauthorized) (expected: wrong-password test A6-10)"
+  ],
+  "results": [
+    {
+      "id": "A6-01",
+      "feature": "Login page",
+      "action": "Open /login",
+      "expected": "No demo accounts, \"Create an account\" link",
+      "actual": "demo panels=0",
+      "pass": true,
+      "screenshot": "A6-01_login_page.png"
+    },
+    {
+      "id": "A6-02",
+      "feature": "Register validation + strength checker",
+      "action": "Name \"Al\", bad email, password \"ali123\", mismatch",
+      "expected": "Errors on every field, \"Weak\" strength shown, nothing sent",
+      "actual": "All four field errors and Weak strength shown",
+      "pass": true,
+      "screenshot": "A6-02_register_validation_weak.png"
+    },
+    {
+      "id": "A6-03",
+      "feature": "Registration + JWT",
+      "action": "Register Hamza Tariq with a strong password",
+      "expected": "201, patient account, signed JWT, logged in, nothing in browser storage",
+      "actual": "HTTP 201, role=patient, JWT HS256, storage empty=true",
+      "pass": true,
+      "screenshot": "A6-03_registered_patient_dashboard.png"
+    },
+    {
+      "id": "A6-04",
+      "feature": "Module 2 validation",
+      "action": "Submit empty form",
+      "expected": "Field errors, nothing sent",
+      "actual": "Inline errors shown",
+      "pass": true,
+      "screenshot": "A6-04_request_empty_rejected.png"
+    },
+    {
+      "id": "A6-05",
+      "feature": "Module 2 submit (frontend -> backend -> DB)",
+      "action": "Brufen 400mg, qty 3, notes <img src=x onerror=alert(1)>",
+      "expected": "201, new GM reference, note shown as text, no alert",
+      "actual": "HTTP 201, GM-1001, literal note shown, alerts=0",
+      "pass": true,
+      "screenshot": "A6-05_request_submitted_xss_literal.png"
+    },
+    {
+      "id": "A6-06",
+      "feature": "Module 2 retrieval",
+      "action": "View Details for GM-1001",
+      "expected": "Details loaded from backend",
+      "actual": "Details shown",
+      "pass": true,
+      "screenshot": "A6-06_track_details_from_backend.png"
+    },
+    {
+      "id": "A6-07",
+      "feature": "Module 1 submit",
+      "action": "Request review of Brufen (id 4)",
+      "expected": "201, listed under My review requests",
+      "actual": "HTTP 201",
+      "pass": true,
+      "screenshot": "A6-07_patient_review_requested.png"
+    },
+    {
+      "id": "A6-14",
+      "feature": "Catalogue from backend (no hardcoded data)",
+      "action": "Search \"Panadol\"",
+      "expected": "Results built from GET /api/medicines (200)",
+      "actual": "GET /api/medicines -> 200, results shown",
+      "pass": true,
+      "screenshot": "A6-14_search_from_backend_catalogue.png"
+    },
+    {
+      "id": "A6-08",
+      "feature": "Role-based access (UI)",
+      "action": "Patient opens /doctor",
+      "expected": "Access Denied",
+      "actual": "Access Denied page",
+      "pass": true,
+      "screenshot": "A6-08_patient_opens_doctor_denied.png"
+    },
+    {
+      "id": "A6-09",
+      "feature": "Duplicate registration",
+      "action": "Register again with the same email in capitals",
+      "expected": "409, \"already registered\"",
+      "actual": "HTTP 409",
+      "pass": true,
+      "screenshot": "A6-09_register_duplicate_email.png"
+    },
+    {
+      "id": "A6-10",
+      "feature": "Backend login",
+      "action": "Registered email + wrong password",
+      "expected": "401, generic error",
+      "actual": "HTTP 401",
+      "pass": true,
+      "screenshot": "A6-10_login_wrong_password.png"
+    },
+    {
+      "id": "A6-11",
+      "feature": "Module 1 doctor decision (role: doctor)",
+      "action": "Doctor logs in, marks reviewed with script text in note",
+      "expected": "200, note shown as text, no alert",
+      "actual": "HTTP 200, alerts=0",
+      "pass": true,
+      "screenshot": "A6-11_doctor_review_saved.png"
+    },
+    {
+      "id": "A6-15",
+      "feature": "Module 2 doctor status update (role: doctor)",
+      "action": "Doctor sets GM-1001 to Approved",
+      "expected": "200, new status shown, patient note shown as text",
+      "actual": "HTTP 200, alerts=0",
+      "pass": true,
+      "screenshot": "A6-15_doctor_request_status_updated.png"
+    },
+    {
+      "id": "A6-12",
+      "feature": "Token kept in memory only",
+      "action": "Reload /doctor while logged in",
+      "expected": "Must log in again",
+      "actual": "Now on /login",
+      "pass": true,
+      "screenshot": null
+    },
+    {
+      "id": "A6-13",
+      "feature": "Data persisted in database",
+      "action": "Registered patient logs in again",
+      "expected": "Doctor decision visible",
+      "actual": "HTTP 200, status \"Reviewed\" shown",
+      "pass": true,
+      "screenshot": "A6-13_patient_sees_reviewed_status.png"
+    },
+    {
+      "id": "A6-16",
+      "feature": "Module 2 status persisted",
+      "action": "Patient opens Track Requests",
+      "expected": "GM-1001 shows \"Approved\"",
+      "actual": "GM-1001 Approved",
+      "pass": true,
+      "screenshot": "A6-16_patient_sees_approved_status.png"
+    }
+  ]
+}

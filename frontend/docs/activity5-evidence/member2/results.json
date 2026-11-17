@@ -1,0 +1,127 @@
+{
+  "summary": {
+    "dialogs": 0,
+    "problems": [],
+    "passed": 13,
+    "total": 13
+  },
+  "results": [
+    {
+      "id": "M2-01",
+      "feature": "Task 1 · Submit Request: empty fields",
+      "input": "Submit with every field empty",
+      "expected": "Blocked; message under each mandatory field; no record added",
+      "actual": "\"Medicine name is required\" | \"Select a valid category\" | \"Quantity must be a whole number between 1 and 20\"; requests listed: 3",
+      "pass": true,
+      "shot": "M2-01_request_empty_fields.png"
+    },
+    {
+      "id": "M2-02",
+      "feature": "Task 1 · Submit Request: invalid input",
+      "input": "Medicine <script>alert('xss')</script>, quantity 50, notes of spaces only",
+      "expected": "Format, range and spaces-only errors; nothing saved",
+      "actual": "\"Use letters, numbers, spaces and . , ' ( ) / % + - only\" | \"Quantity must be a whole number between 1 and 20\" | \"Leave notes empty or enter text, not only spaces\"",
+      "pass": true,
+      "shot": "M2-02_request_invalid_input.png"
+    },
+    {
+      "id": "M2-03",
+      "feature": "Task 1 + Task 2 · Valid request with script in notes",
+      "input": "Medicine \"   Paracetamol 500mg   \", quantity \" 2 \", notes <script>alert('xss')</script>",
+      "expected": "Saved with trimmed values; notes displayed as text; no <script> element; no alert",
+      "actual": "Request GM-1004 submitted successfully; medicine \"Paracetamol 500mg\"; notes displayed \"<script>alert('xss')</script>\"; <script> in list: 0; alerts: 0",
+      "pass": true,
+      "shot": "M2-03_request_xss_literal.png"
+    },
+    {
+      "id": "M2-04",
+      "feature": "Task 2 · Track Requests details panel",
+      "input": "Open GM-1004 details",
+      "expected": "Notes shown as text; no <script> element; no alert",
+      "actual": "Displayed \"<script>alert('xss')</script>\"; <script> in panel: 0; alerts: 0",
+      "pass": true,
+      "shot": "M2-04_track_details_xss_literal.png"
+    },
+    {
+      "id": "M2-05",
+      "feature": "Task 3 · Supporting document selection",
+      "input": "Select setup.exe",
+      "expected": "Rejected: unsupported type; input cleared",
+      "actual": "\"Unsupported file type (.exe). Allowed types: PDF, JPG, JPEG or PNG.\"; files selected: 0; name shown: \"\"; storage items: 0",
+      "pass": true,
+      "shot": "M2-05_file_setup_exe.png"
+    },
+    {
+      "id": "M2-06",
+      "feature": "Task 3 · Supporting document selection",
+      "input": "Select prescription.pdf.exe (double extension)",
+      "expected": "Rejected as .exe; input cleared",
+      "actual": "\"Unsupported file type (.exe). Allowed types: PDF, JPG, JPEG or PNG.\"; files selected: 0; name shown: \"\"; storage items: 0",
+      "pass": true,
+      "shot": "M2-06_file_prescription_pdf_exe.png"
+    },
+    {
+      "id": "M2-07",
+      "feature": "Task 3 · Supporting document selection",
+      "input": "Select large_prescription.pdf (3.0 MB)",
+      "expected": "Rejected: over 2 MB; input cleared",
+      "actual": "\"File is too large (3.0 MB). Maximum size is 2.0 MB.\"; files selected: 0; name shown: \"\"; storage items: 0",
+      "pass": true,
+      "shot": "M2-07_file_large_prescription_pdf.png"
+    },
+    {
+      "id": "M2-08",
+      "feature": "Task 3 · Supporting document selection",
+      "input": "Select renamed_program.pdf (EXE renamed to .pdf)",
+      "expected": "Rejected on content; input cleared",
+      "actual": "\"File content is not a real PDF file. It may have been renamed.\"; files selected: 0; name shown: \"\"; storage items: 0",
+      "pass": true,
+      "shot": "M2-08_file_renamed_program_pdf.png"
+    },
+    {
+      "id": "M2-09",
+      "feature": "Task 3 · Supporting document selection",
+      "input": "Select prescription_scan.png (69 B)",
+      "expected": "Accepted; file name shown; no upload",
+      "actual": "\"File selected for demo only; no upload occurs.\"; files selected: 1; name shown: \"prescription_scan.png\"; storage items: 0",
+      "pass": true,
+      "shot": "M2-09_file_prescription_scan_png.png"
+    },
+    {
+      "id": "M2-10",
+      "feature": "Task 3 · Supporting document selection",
+      "input": "Select prescription.pdf (193 B)",
+      "expected": "Accepted; file name shown; no upload",
+      "actual": "\"File selected for demo only; no upload occurs.\"; files selected: 1; name shown: \"prescription.pdf\"; storage items: 0",
+      "pass": true,
+      "shot": "M2-10_file_prescription_pdf.png"
+    },
+    {
+      "id": "M2-11",
+      "feature": "Task 3 · Selection cleared after submit",
+      "input": "With prescription.pdf selected, submit a valid request",
+      "expected": "Request saved; file selection cleared; nothing uploaded",
+      "actual": "Request GM-1005 submitted successfully; files selected: 0; file name shown: 0",
+      "pass": true,
+      "shot": null
+    },
+    {
+      "id": "M2-12",
+      "feature": "Task 1 · Doctor Review form",
+      "input": "Submit empty; then decision selected with a note of spaces only",
+      "expected": "Decision and note required; spaces-only note rejected",
+      "actual": "\"Choose a review decision.\" / \"Internal note is required.\"; then \"Internal note is required.\"",
+      "pass": true,
+      "shot": "M2-12_doctor_review_validation.png"
+    },
+    {
+      "id": "M2-13",
+      "feature": "Task 2 · Doctor internal note display",
+      "input": "Note \"<img src=x onerror=alert(1)> Confirm strength.\"",
+      "expected": "Saved and shown as text; no <img> element; no alert",
+      "actual": "Displayed \"<img src=x onerror=alert(1)> Confirm strength.\"; injected <img>: 0; alerts: 0",
+      "pass": true,
+      "shot": "M2-13_doctor_note_xss_literal.png"
+    }
+  ]
+}

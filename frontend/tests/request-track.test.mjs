@@ -1,22 +1,21 @@
-import test, { beforeEach } from 'node:test';
+// Module 2 tracking helpers (search + status filter). Activity 6: listing, details and
+// ownership checks now come from the API and are tested in backend/tests/requests.test.mjs.
+import test from 'node:test';
 import assert from 'node:assert/strict';
-import { demoUsers } from '../src/data/demoUsers.js';
-import {
-  STATUSES, addOwnRequest, listOwnRequests, getOwnRequest, resetRequestStore,
-} from '../src/services/requestStore.js';
+import { STATUSES } from '../src/services/requestStore.js';
 import {
   MAX_REFERENCE_LENGTH, normaliseReference, isValidReferenceQuery,
   isValidStatus, filterRequests,
 } from '../src/services/trackHelpers.js';
 
-const account = demoUsers.find(user => user.role === 'patient');
-const patient = { id: account.id, name: account.name, role: account.role };
-const other = { id: 'tracking-other-patient', name: 'Other Patient', role: 'patient' };
-const fields = { medicine: 'Paracetamol', category: 'Painkiller', quantity: 2, notes: '' };
-const own = () => listOwnRequests(patient).requests;
+// Same shape as GET /api/requests returns for the seeded patient account (newest first).
+const sample = Object.freeze([
+  { id: 'GM-1003', patientName: 'Ali Demo', medicine: 'Cetirizine', category: 'Allergy', quantity: 1, notes: '', date: '2026-10-03', status: 'Dispatched' },
+  { id: 'GM-1002', patientName: 'Ali Demo', medicine: 'Omeprazole', category: 'Stomach/Acid', quantity: 2, notes: '', date: '2026-10-02', status: 'Approved' },
+  { id: 'GM-1001', patientName: 'Ali Demo', medicine: 'Paracetamol', category: 'Painkiller', quantity: 1, notes: '', date: '2026-10-01', status: 'Delivered' },
+]);
+const own = () => sample.map(request => ({ ...request }));
 const ids = requests => requests.map(request => request.id);
-
-beforeEach(() => resetRequestStore());
 
 test('normalises lowercase and surrounding whitespace for live search', () => {
   for (const query of ['gm-1002', ' GM-1002 ']) {
@@ -44,14 +43,14 @@ test('invalid formats, types and oversized queries fail closed', () => {
 });
 
 test('each known status filters correctly and All restores the list', () => {
-  addOwnRequest(patient, fields);
+  const withPending = [{ ...own()[0], id: 'GM-1004', status: 'Pending' }, ...own()];
   for (const status of STATUSES) {
     assert.equal(isValidStatus(status), true);
-    const matches = filterRequests(own(), '', status);
+    const matches = filterRequests(withPending, '', status);
     assert.equal(matches.length, 1);
     assert.equal(matches[0].status, status);
   }
-  assert.equal(filterRequests(own(), '', 'All').length, 4);
+  assert.equal(filterRequests(withPending, '', 'All').length, 4);
 });
 
 test('unknown statuses are rejected instead of widening results', () => {
@@ -64,34 +63,6 @@ test('unknown statuses are rejected instead of widening results', () => {
 test('reference search and status filter are applied together', () => {
   assert.deepEqual(ids(filterRequests(own(), ' gm-10 ', 'Approved')), ['GM-1002']);
   assert.deepEqual(filterRequests(own(), 'GM-1002', 'Delivered'), []);
-});
-
-test('fresh store reads include Module 1 submissions in newest-first order', () => {
-  assert.equal(own().length, 3);
-  const added = addOwnRequest(patient, fields);
-  assert.equal(added.ok, true);
-  assert.equal(own()[0].id, added.request.id);
-  assert.deepEqual(ids(filterRequests(own(), 'gm-1004', 'Pending')), ['GM-1004']);
-  assert.deepEqual(getOwnRequest(patient, added.request.id).request, added.request);
-});
-
-test('list and tracking results include only the session owner records', () => {
-  const privateRequest = addOwnRequest(other, fields).request;
-  assert.ok(own().every(request => request.ownerId === patient.id));
-  assert.deepEqual(filterRequests(own(), privateRequest.id), []);
-  assert.deepEqual(ids(listOwnRequests(other).requests), [privateRequest.id]);
-});
-
-test('guessing another patient reference cannot open details in either direction', () => {
-  const privateRequest = addOwnRequest(other, fields).request;
-  const notFound = { ok: false, message: 'Request not found' };
-  assert.deepEqual(getOwnRequest(patient, privateRequest.id), notFound);
-  assert.deepEqual(getOwnRequest(other, 'GM-1002'), notFound);
-  assert.deepEqual(getOwnRequest(patient, 'GM-9999'), notFound);
-  for (const session of [null, { ...patient, role: 'doctor' }]) {
-    assert.deepEqual(listOwnRequests(session), { ok: false, message: 'Access Denied' });
-    assert.deepEqual(getOwnRequest(session, 'GM-1002'), { ok: false, message: 'Access Denied' });
-  }
 });
 
 test('filtering preserves source order and does not mutate the supplied list', () => {

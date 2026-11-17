@@ -1,0 +1,25 @@
+{
+  "status": 201,
+  "user": {
+    "id": 2,
+    "name": "Hamza Tariq",
+    "role": "patient"
+  },
+  "tokenHeader": {
+    "alg": "HS256",
+    "typ": "JWT"
+  },
+  "tokenPayload": {
+    "role": "patient",
+    "iat": 1794848334,
+    "exp": 1794851934,
+    "aud": "genmed-web",
+    "iss": "genmed-api",
+    "sub": "2"
+  },
+  "browserStorageAfterRegister": {
+    "local": [],
+    "session": [],
+    "cookie": ""
+  }
+}
